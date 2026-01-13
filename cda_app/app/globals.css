@@ -1,0 +1,140 @@
+@font-face {
+  font-family: 'Dubai';
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+  src: url('https://cdn.jsdelivr.net/npm/dubai-font@1.1.1/dubai-font/fonts/Dubai-Light.woff2') format('woff2'),
+    url('https://cdn.jsdelivr.net/npm/dubai-font@1.1.1/dubai-font/fonts/Dubai-Light.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Dubai';
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: url('https://cdn.jsdelivr.net/npm/dubai-font@1.1.1/dubai-font/fonts/Dubai-Regular.woff2') format('woff2'),
+    url('https://cdn.jsdelivr.net/npm/dubai-font@1.1.1/dubai-font/fonts/Dubai-Regular.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Dubai';
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  src: url('https://cdn.jsdelivr.net/npm/dubai-font@1.1.1/dubai-font/fonts/Dubai-Medium.woff2') format('woff2'),
+    url('https://cdn.jsdelivr.net/npm/dubai-font@1.1.1/dubai-font/fonts/Dubai-Medium.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Dubai';
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  src: url('https://cdn.jsdelivr.net/npm/dubai-font@1.1.1/dubai-font/fonts/Dubai-Bold.woff2') format('woff2'),
+    url('https://cdn.jsdelivr.net/npm/dubai-font@1.1.1/dubai-font/fonts/Dubai-Bold.woff') format('woff');
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary-blue: #0066CC;
+  --dark-blue: #004C99;
+  --light-blue: #EBF5FF;
+  --yellow-highlight: #FFD700;
+  --text-dark: #1a1a1a;
+  --text-gray: #6B7280;
+  --bg-gray: #F9FAFB;
+  --border-gray: #E5E7EB;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Dubai', sans-serif;
+  line-height: 1.6;
+  color: #1a1a1a;
+  background-color: #ffffff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@layer components {
+  .container-custom {
+    @apply max-w-7xl mx-auto px-3 sm:px-4 lg:px-6;
+  }
+
+  .section-padding {
+    @apply py-16 sm:py-20 lg:py-24;
+  }
+
+  .section-heading {
+    @apply text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight;
+  }
+
+  .section-label {
+    @apply inline-block text-sm font-semibold uppercase tracking-wide mb-3;
+    color: var(--primary-blue);
+  }
+
+  .btn-primary {
+    @apply px-6 py-3 font-semibold rounded-lg transition-all duration-200;
+    background-color: var(--primary-blue);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background-color: var(--dark-blue);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+  }
+
+  .btn-secondary {
+    @apply px-6 py-3 font-semibold rounded-lg transition-all duration-200;
+    background-color: white;
+    color: var(--text-dark);
+    border: 2px solid var(--border-gray);
+  }
+
+  .btn-secondary:hover {
+    background-color: var(--bg-gray);
+    border-color: var(--primary-blue);
+  }
+
+  .card {
+    @apply bg-white rounded-xl shadow-sm transition-shadow duration-200;
+  }
+
+  .card:hover {
+    @apply shadow-lg;
+  }
+
+  .text-primary {
+    color: var(--primary-blue);
+  }
+
+  .bg-primary {
+    background-color: var(--primary-blue);
+  }
+
+  .bg-light-blue {
+    background-color: var(--light-blue);
+  }
+
+  .text-text-gray {
+    color: var(--text-gray);
+  }
+
+  .bg-text-gray {
+    background-color: var(--text-gray);
+  }
+}
