@@ -34,8 +34,10 @@ function Header() {
       <nav className="container-custom">
         <div className="flex justify-between items-center py-4">
           <div className="flex-shrink-0">
-            <Link href="/">
+            <Link href="/" className="flex items-center gap-4">
               <Image src="/assets/logo.png" alt={commonT('logo')} width={48} height={48} className="h-12 w-auto" />
+              <div className="h-8 w-px bg-gray-300"></div>
+              <Image src="/assets/logo_newsvg.svg" alt="Dubai Communicates" width={200} height={48} className="h-12 w-auto" />
             </Link>
           </div>
 
