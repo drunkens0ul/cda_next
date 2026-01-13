@@ -5,11 +5,11 @@ import { useTranslations, useLocale } from 'next-intl'
 import Image from 'next/image'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
-import { 
-  CalendarIcon, 
-  ClockIcon, 
-  LocationIcon, 
-  UsersIcon, 
+import {
+  CalendarIcon,
+  ClockIcon,
+  LocationIcon,
+  UsersIcon,
   CheckCircleIcon,
   ShareIcon,
   ChevronLeftIcon
@@ -88,18 +88,18 @@ function EventDetailPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      
-      <main className="pt-28">
+
+      <main>
         {/* Hero Section with Image - Full Width */}
         <div className="relative">
           {/* Back Button - positioned absolutely */}
-          <Link 
+          <Link
             href={`/${locale}`}
             className="inline-flex items-center justify-center w-10 h-10 text-white bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full transition-colors absolute top-6 left-6 z-20"
           >
             <ChevronLeftIcon className="w-5 h-5" />
           </Link>
-          
+
           {/* Hero Image - Full Width */}
           <div className="relative h-[350px] md:h-[450px] lg:h-[500px] w-full overflow-hidden">
             <Image
@@ -125,7 +125,7 @@ function EventDetailPage() {
                 <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-text-dark mb-6">
                   {eventTitle}
                 </h1>
-                
+
                 <div className="prose prose-gray max-w-none">
                   {eventDescription.split('\n\n').map((paragraph, index) => (
                     <p key={index} className="text-text-gray leading-relaxed mb-4">
@@ -140,7 +140,7 @@ function EventDetailPage() {
                 <h2 className="text-xl md:text-2xl font-bold text-text-dark mb-6">
                   {t('featuredSpeakers')}
                 </h2>
-                
+
                 <div className="flex flex-wrap gap-8">
                   {mockEvent.speakers.map((speaker, index) => (
                     <div key={index} className="flex flex-col items-center text-center">
@@ -164,7 +164,7 @@ function EventDetailPage() {
                 <h2 className="text-xl md:text-2xl font-bold text-text-dark mb-6">
                   {t('eventAgenda')}
                 </h2>
-                
+
                 <div className="space-y-4">
                   {eventAgenda.map((item, index) => (
                     <div key={index} className="flex gap-4 items-start">
