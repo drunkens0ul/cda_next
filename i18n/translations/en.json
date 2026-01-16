@@ -66,7 +66,7 @@
       "title": "Community Inclusion Forum",
       "date": "10 Mar 2026",
       "time": "10:00 AM to 12:00 PM",
-      "description": "Engage with community leaders and learn about best practices for creating accessible and inclusive spaces.",
+      "description": "Explore Dubai's rich cultural heritage through interactive workshops and discussions with local artists and historians.",
       "attendees": "2,100 attending"
     }
   },
@@ -185,6 +185,31 @@
     "registrationClosesIn": "Registration closes in",
     "registrationClosed": "Registration Closed",
     "registrationClosesAt": "Registration closes on"
+  },
+  "quiz": {
+    "title": "Event Feedback Quiz",
+    "description": "Your feedback helps us improve future events",
+    "startQuiz": "Start Quiz",
+    "nextQuestion": "Next",
+    "previousQuestion": "Previous",
+    "submitQuiz": "Submit",
+    "submitting": "Submitting...",
+    "question": "Question",
+    "of": "of",
+    "thankYou": "Thank You for Your Time",
+    "feedbackReceived": "Your feedback has been successfully submitted and will help us improve future events.",
+    "backToDashboard": "Back to Dashboard",
+    "backToHome": "Back to Home",
+    "selectOption": "Please select an option",
+    "completionPercentage": "100% Complete",
+    "quizCompleted": "Quiz Completed",
+    "switchLanguage": "Switch to Arabic",
+    "currentLanguage": "English",
+    "excellent": "Excellent",
+    "good": "Good",
+    "average": "Average",
+    "belowAverage": "Below Average",
+    "poor": "Poor"
   },
   "auth": {
     "organizationName": "Community Development Authority",
@@ -431,7 +456,6 @@
     "categoryPendingSignup": "Pending Signup",
     "categoryExport": "Export",
     "noAuditLogs": "No audit logs found",
-    "showing": "Showing",
     "page": "Page"
   },
   "NotFound": {

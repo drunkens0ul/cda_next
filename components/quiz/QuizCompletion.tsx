@@ -1,0 +1,164 @@
+'use client'
+
+import Image from 'next/image'
+import { useTranslations } from 'next-intl'
+import Link from 'next/link'
+import { useEffect, useState } from 'react'
+
+interface QuizCompletionProps {
+    lang: 'en' | 'ar'
+}
+
+export default function QuizCompletion({ lang }: QuizCompletionProps) {
+    const t = useTranslations('quiz')
+    const [showConfetti, setShowConfetti] = useState(true)
+
+    useEffect(() => {
+        const timer = setTimeout(() => setShowConfetti(false), 5000)
+        return () => clearTimeout(timer)
+    }, [])
+
+    return (
+        <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden bg-gray-50">
+            {/* Animated Confetti Background */}
+            {showConfetti && (
+                <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                    {Array.from({ length: 100 }).map((_, i) => (
+                        <div
+                            key={i}
+                            className="absolute animate-confetti"
+                            style={{
+                                left: `${Math.random() * 100}%`,
+                                top: `-${Math.random() * 20}%`,
+                                width: `${Math.random() * 8 + 4}px`,
+                                height: `${Math.random() * 8 + 4}px`,
+                                backgroundColor: `hsl(${Math.random() * 360}, 70%, 60%)`,
+                                animationDelay: `${Math.random() * 3}s`,
+                                animationDuration: `${Math.random() * 3 + 2}s`,
+                                opacity: Math.random() * 0.8 + 0.2,
+                                borderRadius: Math.random() > 0.5 ? '50%' : '0',
+                                transform: `rotate(${Math.random() * 360}deg)`
+                            }}
+                        />
+                    ))}
+                </div>
+            )}
+
+            <div className="max-w-4xl w-full relative z-10">
+                {/* Header with Logo */}
+                <div className="flex justify-center items-center mb-8">
+                    <Link href={`/${lang}`} className="flex items-center gap-3">
+                        <Image
+                            src="/assets/logo.png"
+                            alt="CDA Logo"
+                            width={48}
+                            height={48}
+                            className="h-12 w-auto"
+                        />
+                        <div className="h-8 w-px bg-gray-300"></div>
+                        <Image
+                            src="/assets/logo_newsvg.svg"
+                            alt="Dubai Communicates"
+                            width={48}
+                            height={27}
+                            className="h-8 w-auto"
+                        />
+                    </Link>
+                </div>
+
+                {/* Main Completion Card */}
+                <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100">
+                    {/* Success Badge */}
+                    <div className="bg-gradient-to-r from-yellow-400 to-yellow-500 px-6 py-3 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                            <svg className="w-5 h-5 text-gray-900" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                            <span className="text-gray-900 font-semibold">{t('completionPercentage')}</span>
+                        </div>
+                    </div>
+
+                    <div className="p-8 lg:p-12 text-center">
+                        {/* Completion Icon */}
+                        <div className="mb-6 inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full">
+                            <svg className="w-10 h-10 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                        </div>
+
+                        {/* Thank You Title */}
+                        <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+                            {t('thankYou')}
+                        </h1>
+
+                        {/* Feedback Message */}
+                        <p className="text-gray-600 text-lg mb-8 max-w-2xl mx-auto leading-relaxed">
+                            {t('feedbackReceived')}
+                        </p>
+
+                        {/* Person Image */}
+                        <div className="relative mx-auto mb-8 rounded-3xl overflow-hidden bg-teal-500 shadow-2xl w-full max-w-md h-80">
+                            <Image
+                                src="/assets/quizsomplete.png"
+                                alt="Thank You"
+                                fill
+                                className="object-cover object-center"
+                                priority
+                                sizes="(max-width: 768px) 100vw, 50vw"
+                            />
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
+                            <Link
+                                href={`/${lang}/dashboard`}
+                                className="flex-1 bg-primary hover:bg-primary-700 text-white font-semibold py-3 px-8 rounded-xl transition-all transform hover:scale-105 shadow-lg hover:shadow-xl text-center"
+                            >
+                                {t('backToDashboard')}
+                            </Link>
+                            <Link
+                                href={`/${lang}`}
+                                className="flex-1 border-2 border-gray-300 text-gray-700 font-semibold py-3 px-8 rounded-xl hover:bg-gray-50 transition-all text-center"
+                            >
+                                {t('backToHome')}
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Bottom Confetti Decoration */}
+                <div className="mt-8 flex justify-center">
+                    <div className="inline-flex gap-3">
+                        {Array.from({ length: 12 }).map((_, i) => (
+                            <div
+                                key={i}
+                                className="w-3 h-3 rounded-full animate-bounce"
+                                style={{
+                                    backgroundColor: `hsl(${(i * 360) / 12}, 70%, 60%)`,
+                                    animationDelay: `${i * 0.1}s`,
+                                    animationDuration: '1.5s'
+                                }}
+                            />
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            <style jsx>{`
+        @keyframes confetti {
+          0% {
+            transform: translateY(-20vh) rotate(0deg);
+            opacity: 1;
+          }
+          100% {
+            transform: translateY(100vh) rotate(720deg);
+            opacity: 0;
+          }
+        }
+        .animate-confetti {
+          animation: confetti linear infinite;
+        }
+      `}</style>
+        </div>
+    )
+}

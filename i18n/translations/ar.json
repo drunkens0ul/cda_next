@@ -186,6 +186,31 @@
     "registrationClosed": "انتهى التسجيل",
     "registrationClosesAt": "ينتهي التسجيل في"
   },
+  "quiz": {
+    "title": "استبيان تقييم الفعالية",
+    "description": "ملاحظاتك تساعدنا على تحسين الفعاليات المستقبلية",
+    "startQuiz": "ابدأ الاستبيان",
+    "nextQuestion": "التالي",
+    "previousQuestion": "السابق",
+    "submitQuiz": "إرسال",
+    "submitting": "جاري الإرسال...",
+    "question": "السؤال",
+    "of": "من",
+    "thankYou": "شكراً لك على وقتك",
+    "feedbackReceived": "تم استلام ملاحظاتك بنجاح وستساعدنا على تحسين الفعاليات المستقبلية.",
+    "backToDashboard": "العودة للوحة التحكم",
+    "backToHome": "العودة للرئيسية",
+    "selectOption": "الرجاء اختيار خيار",
+    "completionPercentage": "اكتمل ١٠٠٪",
+    "quizCompleted": "اكتمل الاستبيان",
+    "switchLanguage": "التبديل للإنجليزية",
+    "currentLanguage": "العربية",
+    "excellent": "ممتاز",
+    "good": "جيد",
+    "average": "متوسط",
+    "belowAverage": "أقل من المتوسط",
+    "poor": "ضعيف"
+  },
   "auth": {
     "organizationName": "هيئة تنمية المجتمع",
     "initiativeName": "دبي تتحدث بلغة الإشارة",
@@ -431,7 +456,6 @@
     "categoryPendingSignup": "التسجيل المعلق",
     "categoryExport": "التصدير",
     "noAuditLogs": "لا توجد سجلات تدقيق",
-    "showing": "عرض",
     "page": "صفحة"
   },
   "NotFound": {
