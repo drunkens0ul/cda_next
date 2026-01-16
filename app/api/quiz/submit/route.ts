@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-import { query } from '@/lib/db'
+import { getCurrentUser } from '@/lib/auth'
 import {
     getQuizById,
     hasUserSubmittedQuiz,
@@ -17,32 +16,14 @@ interface SubmitQuizRequest {
 
 export async function POST(request: NextRequest) {
     try {
-        const cookieStore = await cookies()
-        const sessionToken = cookieStore.get('session_token')?.value
-
-        if (!sessionToken) {
+        // Check authentication using unified auth helper
+        const authUser = await getCurrentUser()
+        if (!authUser) {
             return NextResponse.json(
                 { error: 'Unauthorized' },
                 { status: 401 }
             )
         }
-
-        // Verify session and get user
-        const sessionResult = await query<{ user_id: string }>(`
-      SELECT user_id FROM sessions 
-      WHERE session_token = $1 
-      AND expires_at > NOW() 
-      AND is_deleted = FALSE
-    `, [sessionToken])
-
-        if (sessionResult.rows.length === 0) {
-            return NextResponse.json(
-                { error: 'Invalid session' },
-                { status: 401 }
-            )
-        }
-
-        const userId = sessionResult.rows[0].user_id
 
         const body: SubmitQuizRequest = await request.json()
         const { quizId, eventId, responses, sessionDuration } = body
@@ -73,7 +54,7 @@ export async function POST(request: NextRequest) {
 
         // Check if user already submitted (if not allowing multiple submissions)
         if (!quiz.allowMultipleSubmissions) {
-            const alreadySubmitted = await hasUserSubmittedQuiz(userId, quizId)
+            const alreadySubmitted = await hasUserSubmittedQuiz(authUser.id, quizId)
 
             if (alreadySubmitted) {
                 return NextResponse.json(
@@ -90,7 +71,7 @@ export async function POST(request: NextRequest) {
         const userAgent = request.headers.get('user-agent') || 'unknown'
 
         // Submit quiz using library function
-        const submissionId = await submitQuiz(quizId, userId, responses, {
+        const submissionId = await submitQuiz(quizId, authUser.id, responses, {
             eventId,
             ipAddress,
             userAgent,

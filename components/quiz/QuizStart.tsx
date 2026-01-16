@@ -3,6 +3,25 @@
 import Image from 'next/image'
 import { useTranslations } from 'next-intl'
 import Link from 'next/link'
+import { useState } from 'react'
+
+interface ConfettiCircle {
+    cx: number
+    cy: number
+    r: number
+    fill: number
+    opacity: number
+}
+
+const generateConfettiCircles = (): ConfettiCircle[] => {
+    return Array.from({ length: 100 }).map(() => ({
+        cx: Math.random() * 1200,
+        cy: Math.random() * 120,
+        r: Math.random() * 3 + 1,
+        fill: Math.random() * 360,
+        opacity: Math.random() * 0.8 + 0.2
+    }))
+}
 
 interface QuizStartProps {
     title: string
@@ -13,6 +32,7 @@ interface QuizStartProps {
 
 export default function QuizStart({ title, description, onStart, lang }: QuizStartProps) {
     const t = useTranslations('quiz')
+    const [confettiParticles] = useState<ConfettiCircle[]>(generateConfettiCircles)
 
     return (
         <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
@@ -30,14 +50,14 @@ export default function QuizStart({ title, description, onStart, lang }: QuizSta
                     </defs>
                     <g>
                         {/* Confetti particles */}
-                        {Array.from({ length: 100 }).map((_, i) => (
+                        {confettiParticles.map((particle, i) => (
                             <circle
                                 key={i}
-                                cx={Math.random() * 1200}
-                                cy={Math.random() * 120}
-                                r={Math.random() * 3 + 1}
-                                fill={`hsl(${Math.random() * 360}, 70%, 60%)`}
-                                opacity={Math.random() * 0.8 + 0.2}
+                                cx={particle.cx}
+                                cy={particle.cy}
+                                r={particle.r}
+                                fill={`hsl(${particle.fill}, 70%, 60%)`}
+                                opacity={particle.opacity}
                             />
                         ))}
                     </g>

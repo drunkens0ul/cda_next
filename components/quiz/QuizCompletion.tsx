@@ -5,6 +5,34 @@ import { useTranslations } from 'next-intl'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
+interface ConfettiParticle {
+    left: number
+    top: number
+    width: number
+    height: number
+    backgroundColor: number
+    animationDelay: number
+    animationDuration: number
+    opacity: number
+    borderRadius: boolean
+    rotate: number
+}
+
+const generateConfettiParticles = (): ConfettiParticle[] => {
+    return Array.from({ length: 100 }).map(() => ({
+        left: Math.random() * 100,
+        top: -Math.random() * 20,
+        width: Math.random() * 8 + 4,
+        height: Math.random() * 8 + 4,
+        backgroundColor: Math.random() * 360,
+        animationDelay: Math.random() * 3,
+        animationDuration: Math.random() * 3 + 2,
+        opacity: Math.random() * 0.8 + 0.2,
+        borderRadius: Math.random() > 0.5,
+        rotate: Math.random() * 360
+    }))
+}
+
 interface QuizCompletionProps {
     lang: 'en' | 'ar'
 }
@@ -12,6 +40,7 @@ interface QuizCompletionProps {
 export default function QuizCompletion({ lang }: QuizCompletionProps) {
     const t = useTranslations('quiz')
     const [showConfetti, setShowConfetti] = useState(true)
+    const [confettiParticles] = useState<ConfettiParticle[]>(generateConfettiParticles)
 
     useEffect(() => {
         const timer = setTimeout(() => setShowConfetti(false), 5000)
@@ -23,21 +52,21 @@ export default function QuizCompletion({ lang }: QuizCompletionProps) {
             {/* Animated Confetti Background */}
             {showConfetti && (
                 <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                    {Array.from({ length: 100 }).map((_, i) => (
+                    {confettiParticles.map((particle, i) => (
                         <div
                             key={i}
                             className="absolute animate-confetti"
                             style={{
-                                left: `${Math.random() * 100}%`,
-                                top: `-${Math.random() * 20}%`,
-                                width: `${Math.random() * 8 + 4}px`,
-                                height: `${Math.random() * 8 + 4}px`,
-                                backgroundColor: `hsl(${Math.random() * 360}, 70%, 60%)`,
-                                animationDelay: `${Math.random() * 3}s`,
-                                animationDuration: `${Math.random() * 3 + 2}s`,
-                                opacity: Math.random() * 0.8 + 0.2,
-                                borderRadius: Math.random() > 0.5 ? '50%' : '0',
-                                transform: `rotate(${Math.random() * 360}deg)`
+                                left: `${particle.left}%`,
+                                top: `${particle.top}%`,
+                                width: `${particle.width}px`,
+                                height: `${particle.height}px`,
+                                backgroundColor: `hsl(${particle.backgroundColor}, 70%, 60%)`,
+                                animationDelay: `${particle.animationDelay}s`,
+                                animationDuration: `${particle.animationDuration}s`,
+                                opacity: particle.opacity,
+                                borderRadius: particle.borderRadius ? '50%' : '0',
+                                transform: `rotate(${particle.rotate}deg)`
                             }}
                         />
                     ))}
