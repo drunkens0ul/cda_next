@@ -1,12 +1,26 @@
 'use client'
 
-import { memo } from 'react'
+import { memo, useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import Image from 'next/image'
 
 function Hero() {
   const t = useTranslations('hero')
   const commonT = useTranslations('common')
+  const [currentImage, setCurrentImage] = useState(0)
+  
+  const heroImages = [
+    '/assets/nurse-professional.jpg',
+    '/assets/police-officer.jpg',
+    '/assets/school-education.jpg'
+  ]
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImage((prev) => (prev + 1) % heroImages.length)
+    }, 5000)
+    return () => clearInterval(interval)
+  }, [])
 
   return (
     <section className="relative w-full bg-light-blue" style={{ padding: '120px 10% 80px 10%' }}>
@@ -35,12 +49,23 @@ function Hero() {
 
         <div className="relative rounded-lg overflow-hidden shadow-lg h-[400px] sm:h-[450px] lg:h-[500px]">
           <Image
-            src="/assets/hero.jpg"
+            src={heroImages[currentImage]}
             alt={commonT('signLanguage')}
             fill
             priority
-            className="object-cover object-center"
+            className="object-cover object-center transition-opacity duration-1000"
+            key={currentImage}
           />
+          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
+            {heroImages.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentImage(index)}
+                className={`w-2 h-2 rounded-full transition-all ${index === currentImage ? 'bg-white scale-125' : 'bg-white/50'}`}
+                aria-label={`Go to image ${index + 1}`}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </section>

@@ -1,0 +1,64 @@
+-- Seed initial events
+-- All times are stored in UTC with timezone offset (+00 for UTC)
+-- Events are scheduled in Dubai (UTC+4) timezone, so times are converted to UTC
+INSERT INTO events (slug, title, title_ar, description, description_ar, date, start_time, end_time, location, location_ar, is_virtual, max_attendees, image_url, status) VALUES
+(
+    'tech-innovation-summit',
+    'Tech Innovation Summit',
+    'قمة الابتكار التقني',
+    'The Tech Innovation Summit 2026 brings together the brightest minds in technology to discuss emerging trends, share insights, and explore the future of innovation. This full-day virtual event features keynote presentations, interactive workshops, and networking opportunities with industry leaders.
+
+Whether you''re a seasoned professional or just starting your tech journey, this summit offers valuable perspectives on AI, cloud computing, cybersecurity, and digital transformation. Join us to learn, connect, and be inspired by the possibilities of tomorrow''s technology.',
+    'تجمع قمة الابتكار التقني 2026 ألمع العقول في مجال التكنولوجيا لمناقشة الاتجاهات الناشئة، ومشاركة الرؤى، واستكشاف مستقبل الابتكار. تتضمن هذه الفعالية الافتراضية ليوم كامل عروضاً رئيسية، وورش عمل تفاعلية، وفرص للتواصل مع قادة الصناعة.
+
+سواء كنت محترفاً متمرساً أو في بداية رحلتك التقنية، تقدم هذه القمة رؤى قيمة حول الذكاء الاصطناعي، والحوسبة السحابية، والأمن السيبراني، والتحول الرقمي. انضم إلينا للتعلم والتواصل والإلهام بإمكانيات تكنولوجيا الغد.',
+    '2026-01-15',
+    '05:00:00+00',
+    '13:00:00+00',
+    'Virtual Event (Microsoft Teams)',
+    'فعالية افتراضية (مايكروسوفت تيمز)',
+    TRUE,
+    2000,
+    '/assets/event1.jpg',
+    'upcoming'
+),
+(
+    'cultural-heritage-conference',
+    'Cultural Heritage Conference',
+    'مؤتمر التراث الثقافي',
+    'Join us for an immersive exploration of cultural heritage preservation and celebration. This conference brings together historians, cultural experts, and community leaders to discuss the importance of preserving our shared heritage while embracing modern technologies.
+
+Topics include digital archiving, community engagement, sustainable tourism, and the role of technology in heritage preservation. Connect with passionate individuals dedicated to protecting and celebrating cultural diversity.',
+    'انضم إلينا لاستكشاف غامر للحفاظ على التراث الثقافي والاحتفاء به. يجمع هذا المؤتمر المؤرخين والخبراء الثقافيين وقادة المجتمع لمناقشة أهمية الحفاظ على تراثنا المشترك مع تبني التقنيات الحديثة.
+
+تشمل الموضوعات الأرشفة الرقمية، والمشاركة المجتمعية، والسياحة المستدامة، ودور التكنولوجيا في الحفاظ على التراث.',
+    '2026-02-22',
+    '06:00:00+00',
+    '14:00:00+00',
+    'Dubai Convention Center',
+    'مركز دبي للمؤتمرات',
+    FALSE,
+    500,
+    '/assets/event2.jpg',
+    'upcoming'
+),
+(
+    'community-inclusion-forum',
+    'Community Inclusion Forum',
+    'منتدى الشمول المجتمعي',
+    'The Community Inclusion Forum is dedicated to creating a more accessible and inclusive society. This event focuses on breaking barriers, fostering understanding, and building bridges between diverse communities.
+
+Featuring workshops on accessibility, panel discussions on inclusion policies, and networking sessions with advocates and policymakers. Together, we can create meaningful change and ensure everyone has an equal opportunity to participate in community life.',
+    'منتدى الشمول المجتمعي مكرس لإنشاء مجتمع أكثر سهولة وشمولية. يركز هذا الحدث على كسر الحواجز، وتعزيز التفاهم، وبناء الجسور بين المجتمعات المتنوعة.
+
+يضم ورش عمل حول إمكانية الوصول، ونقاشات حول سياسات الشمول، وجلسات تواصل مع المدافعين وصانعي السياسات.',
+    '2026-03-10',
+    '05:30:00+00',
+    '12:30:00+00',
+    'Community Center, Dubai',
+    'مركز المجتمع، دبي',
+    FALSE,
+    300,
+    '/assets/event3.jpg',
+    'upcoming'
+);

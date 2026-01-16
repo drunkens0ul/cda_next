@@ -28,7 +28,7 @@ function About() {
         </div>
         <div className="relative w-full h-96 rounded-2xl shadow-lg overflow-hidden">
           <Image
-            src="/assets/edit_section.jpg"
+            src="/assets/nurse-professional.jpg"
             alt={commonT('buildingInclusiveFuture')}
             fill
             className="object-cover"

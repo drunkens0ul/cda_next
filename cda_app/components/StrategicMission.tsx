@@ -15,12 +15,12 @@ function StrategicMission() {
     {
       title: t('pillar1Title'),
       description: t('pillar1Desc'),
-      image: '/assets/edit_section.jpg',
+      image: '/assets/nurse-professional.jpg',
     },
     {
       title: t('pillar2Title'),
       description: t('pillar2Desc'),
-      image: '/assets/hero.jpg',
+      image: '/assets/doctor-professional.png',
     },
     {
       title: t('pillar3Title'),

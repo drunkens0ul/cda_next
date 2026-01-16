@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: docker.io/postgres:16-alpine
+    container_name: cda_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-cda_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cda_password}
+      POSTGRES_DB: ${POSTGRES_DB:-cda_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./database/data:/var/lib/postgresql/data:Z
+      - ./database/migrations:/docker-entrypoint-initdb.d/migrations:ro,Z
+      - ./database/init:/docker-entrypoint-initdb.d:ro,Z
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cda_user} -d ${POSTGRES_DB:-cda_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
