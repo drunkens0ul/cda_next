@@ -25,6 +25,11 @@ interface Quiz {
     title: { en: string; ar: string }
     description: { en: string; ar: string }
     questions: QuizQuestion[]
+    allowMultipleSubmissions: boolean
+    userStatus?: {
+        hasSubmitted: boolean
+        allowMultipleSubmissions: boolean
+    } | null
 }
 
 export default function QuizPage() {
@@ -38,9 +43,12 @@ export default function QuizPage() {
     const [isLoading, setIsLoading] = useState(true)
     const [isCheckingAuth, setIsCheckingAuth] = useState(true)
     const [quiz, setQuiz] = useState<Quiz | null>(null)
-    const [currentStep, setCurrentStep] = useState<'start' | 'question' | 'complete'>('start')
+    const [currentStep, setCurrentStep] = useState<'start' | 'question' | 'complete' | 'already_submitted' | 'error'>('start')
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
     const [answers, setAnswers] = useState<Record<string, string>>({})
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    const [submitError, setSubmitError] = useState<string | null>(null)
+    const [loadingError, setLoadingError] = useState<string | null>(null)
 
     // Check authentication
     useEffect(() => {
@@ -71,27 +79,38 @@ export default function QuizPage() {
 
         const fetchQuiz = async () => {
             setIsLoading(true)
+            setLoadingError(null)
             try {
                 const response = await fetch(`/api/quiz/${slug}`)
 
                 if (!response.ok) {
-                    console.error('Failed to fetch quiz:', response.statusText)
-                    router.push(`/${lang}`)
+                    let errorMessage = t('quizNotFound')
+                    if (response.status === 403) {
+                        errorMessage = t('quizInactive')
+                    }
+                    setLoadingError(errorMessage)
+                    setCurrentStep('error')
                     return
                 }
 
                 const data = await response.json()
                 setQuiz(data)
+
+                // Check if user already submitted
+                if (data.userStatus?.hasSubmitted && !data.allowMultipleSubmissions) {
+                    setCurrentStep('already_submitted')
+                }
             } catch (error) {
                 console.error('Failed to fetch quiz:', error)
-                router.push(`/${lang}`)
+                setLoadingError(t('errorOccurred'))
+                setCurrentStep('error')
             } finally {
                 setIsLoading(false)
             }
         }
 
         fetchQuiz()
-    }, [slug, lang, isCheckingAuth, router])
+    }, [slug, lang, isCheckingAuth, router, t])
 
     const handleStartQuiz = () => {
         setCurrentStep('question')
@@ -115,6 +134,9 @@ export default function QuizPage() {
     }
 
     const handleSubmit = async (finalAnswers: Record<string, string>) => {
+        setIsSubmitting(true)
+        setSubmitError(null)
+
         try {
             // Convert answers to API format
             const responses = Object.entries(finalAnswers).map(([questionId, answerId]) => ({
@@ -133,21 +155,63 @@ export default function QuizPage() {
             })
 
             if (!response.ok) {
-                throw new Error('Failed to submit quiz')
+                const errorData = await response.json()
+                let errorMessage = errorData.error || t('submissionFailed')
+
+                // Handle specific error types
+                if (response.status === 401) {
+                    errorMessage = t('loginRequired')
+                    setTimeout(() => {
+                        const returnTo = `/${lang}/quiz/${slug}`
+                        router.replace(`/${lang}/login?returnTo=${encodeURIComponent(returnTo)}`)
+                    }, 2000)
+                } else if (errorMessage.includes('already submitted')) {
+                    errorMessage = t('alreadySubmitted')
+                    setTimeout(() => setCurrentStep('already_submitted'), 1500)
+                }
+
+                throw new Error(errorMessage)
             }
 
             setCurrentStep('complete')
         } catch (error) {
             console.error('Failed to submit quiz:', error)
-            // Still show completion for better UX, but log the error
-            setCurrentStep('complete')
+            const errorMessage = error instanceof Error ? error.message : t('submissionFailed')
+            setSubmitError(errorMessage)
+        } finally {
+            setIsSubmitting(false)
         }
+    }
+
+    const handleRetrySubmit = () => {
+        handleSubmit(answers)
     }
 
     if (isCheckingAuth || isLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
                 <SpinnerIcon className="animate-spin h-8 w-8 text-primary" />
+            </div>
+        )
+    }
+
+    if (loadingError) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+                <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl p-8 text-center">
+                    <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-6">
+                        <svg className="w-8 h-8 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                        </svg>
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-4">{loadingError}</h2>
+                    <button
+                        onClick={() => router.push(`/${lang}`)}
+                        className="w-full bg-primary hover:bg-primary-700 text-white font-semibold py-3 px-8 rounded-xl transition-all"
+                    >
+                        {t('backToHome')}
+                    </button>
+                </div>
             </div>
         )
     }
@@ -168,21 +232,44 @@ export default function QuizPage() {
             )}
 
             {currentStep === 'question' && quiz.questions[currentQuestionIndex] && (
-                <QuizQuestion
-                    question={quiz.questions[currentQuestionIndex]}
-                    questionNumber={currentQuestionIndex + 1}
-                    totalQuestions={quiz.questions.length}
-                    selectedAnswer={answers[quiz.questions[currentQuestionIndex].id]}
-                    onNext={handleNextQuestion}
-                    onPrevious={handlePreviousQuestion}
-                    showPrevious={currentQuestionIndex > 0}
-                    isLastQuestion={currentQuestionIndex === quiz.questions.length - 1}
-                    lang={lang}
-                />
+                <div>
+                    {submitError && (
+                        <div className="fixed top-0 left-0 right-0 z-50 bg-red-50 border-b border-red-200 px-4 py-4">
+                            <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
+                                <div className="flex-1">
+                                    <p className="text-red-800 font-semibold">{submitError}</p>
+                                    <p className="text-red-600 text-sm mt-1">{t('submissionFailedDesc')}</p>
+                                </div>
+                                <button
+                                    onClick={handleRetrySubmit}
+                                    className="px-4 py-2 bg-primary hover:bg-primary-700 text-white font-semibold rounded-lg transition-colors whitespace-nowrap"
+                                >
+                                    {t('tryAgain')}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                    <QuizQuestion
+                        question={quiz.questions[currentQuestionIndex]}
+                        questionNumber={currentQuestionIndex + 1}
+                        totalQuestions={quiz.questions.length}
+                        selectedAnswer={answers[quiz.questions[currentQuestionIndex].id]}
+                        onNext={handleNextQuestion}
+                        onPrevious={handlePreviousQuestion}
+                        showPrevious={currentQuestionIndex > 0}
+                        isLastQuestion={currentQuestionIndex === quiz.questions.length - 1}
+                        lang={lang}
+                        isSubmitting={isSubmitting}
+                    />
+                </div>
             )}
 
             {currentStep === 'complete' && (
                 <QuizCompletion lang={lang} />
+            )}
+
+            {currentStep === 'already_submitted' && (
+                <QuizCompletion lang={lang} variant="alreadySubmitted" />
             )}
         </div>
     )

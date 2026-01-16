@@ -64,7 +64,7 @@ export default function QuizStart({ title, description, onStart, lang }: QuizSta
                 </svg>
             </div>
 
-            <div className="max-w-4xl w-full relative z-10">
+            <div className="max-w-2xl w-full relative z-10">
                 {/* Header with Logo */}
                 <div className="flex justify-between items-center mb-8">
                     <Link href={`/${lang}`} className="flex items-center gap-3">
@@ -92,37 +92,20 @@ export default function QuizStart({ title, description, onStart, lang }: QuizSta
                 </div>
 
                 {/* Main Content Card */}
-                <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100">
-                    <div className="grid md:grid-cols-2 gap-0">
-                        {/* Left Side - Content */}
-                        <div className="p-8 lg:p-12 flex flex-col justify-center">
-                            <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-                                {title}
-                            </h1>
-                            <p className="text-gray-600 text-lg mb-8 leading-relaxed">
-                                {description}
-                            </p>
+                <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100 p-8 lg:p-12 flex flex-col items-center justify-center text-center">
+                    <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+                        {title}
+                    </h1>
+                    <p className="text-gray-600 text-lg mb-8 leading-relaxed max-w-2xl">
+                        {description}
+                    </p>
 
-                            <button
-                                onClick={onStart}
-                                className="w-full bg-primary hover:bg-primary-700 text-white font-semibold py-4 px-8 rounded-xl transition-all transform hover:scale-105 shadow-lg hover:shadow-xl"
-                            >
-                                {t('startQuiz')}
-                            </button>
-                        </div>
-
-                        {/* Right Side - Image */}
-                        <div className="relative h-64 md:h-auto bg-teal-500 rounded-br-3xl overflow-hidden">
-                            <Image
-                                src="/assets/quizstart.png"
-                                alt="Quiz Start"
-                                fill
-                                className="object-cover object-center"
-                                priority
-                                sizes="(max-width: 768px) 100vw, 50vw"
-                            />
-                        </div>
-                    </div>
+                    <button
+                        onClick={onStart}
+                        className="w-full max-w-md bg-primary hover:bg-primary-700 text-white font-semibold py-4 px-8 rounded-xl transition-all transform hover:scale-105 shadow-lg hover:shadow-xl"
+                    >
+                        {t('startQuiz')}
+                    </button>
                 </div>
 
                 {/* Footer Confetti */}

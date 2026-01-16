@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getQuizBySlug } from '@/lib/quiz'
+import { getQuizBySlug, hasUserSubmittedQuiz } from '@/lib/quiz'
+import { getCurrentUser } from '@/lib/auth'
 
 export async function GET(
     request: NextRequest,
@@ -7,17 +8,28 @@ export async function GET(
 ) {
     try {
         const { slug } = await params
-
+        
         const quiz = await getQuizBySlug(slug)
-
+        
         if (!quiz) {
             return NextResponse.json(
                 { error: 'Quiz not found' },
                 { status: 404 }
             )
         }
-
-        return NextResponse.json(quiz)
+        
+        // Check user submission status if authenticated
+        const authUser = await getCurrentUser()
+        let userStatus = null
+        if (authUser) {
+            const hasSubmitted = await hasUserSubmittedQuiz(authUser.id, quiz.id)
+            userStatus = {
+                hasSubmitted,
+                allowMultipleSubmissions: quiz.allowMultipleSubmissions
+            }
+        }
+        
+        return NextResponse.json({ ...quiz, userStatus })
 
     } catch (error) {
         console.error('Error fetching quiz:', error)

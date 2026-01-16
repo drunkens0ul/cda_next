@@ -209,7 +209,17 @@
     "good": "جيد",
     "average": "متوسط",
     "belowAverage": "أقل من المتوسط",
-    "poor": "ضعيف"
+    "poor": "ضعيف",
+    "alreadySubmitted": "لقد أكملت هذا الاستبيان بالفعل",
+    "submissionFailed": "فشل إرسال الاستبيان",
+    "submissionFailedDesc": "يرجى التحقق من اتصالك والمحاولة مرة أخرى",
+    "tryAgain": "حاول مرة أخرى",
+    "submittingQuiz": "جاري إرسال إجاباتك...",
+    "errorOccurred": "حدث خطأ",
+    "loginRequired": "يرجى تسجيل الدخول للمتابعة",
+    "quizNotFound": "الاستبيان غير موجود",
+    "quizInactive": "هذا الاستبيان غير نشط حالياً",
+    "backToQuiz": "العودة للاستبيان"
   },
   "auth": {
     "organizationName": "هيئة تنمية المجتمع",

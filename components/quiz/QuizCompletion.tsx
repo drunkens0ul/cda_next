@@ -35,12 +35,14 @@ const generateConfettiParticles = (): ConfettiParticle[] => {
 
 interface QuizCompletionProps {
     lang: 'en' | 'ar'
+    variant?: 'success' | 'alreadySubmitted'
 }
 
-export default function QuizCompletion({ lang }: QuizCompletionProps) {
+export default function QuizCompletion({ lang, variant = 'success' }: QuizCompletionProps) {
     const t = useTranslations('quiz')
     const [showConfetti, setShowConfetti] = useState(true)
     const [confettiParticles] = useState<ConfettiParticle[]>(generateConfettiParticles)
+    const isAlreadySubmitted = variant === 'alreadySubmitted'
 
     useEffect(() => {
         const timer = setTimeout(() => setShowConfetti(false), 5000)
@@ -50,7 +52,7 @@ export default function QuizCompletion({ lang }: QuizCompletionProps) {
     return (
         <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden bg-gray-50">
             {/* Animated Confetti Background */}
-            {showConfetti && (
+            {!isAlreadySubmitted && showConfetti && (
                 <div className="absolute inset-0 pointer-events-none overflow-hidden">
                     {confettiParticles.map((particle, i) => (
                         <div
@@ -97,32 +99,50 @@ export default function QuizCompletion({ lang }: QuizCompletionProps) {
 
                 {/* Main Completion Card */}
                 <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100">
-                    {/* Success Badge */}
-                    <div className="bg-gradient-to-r from-yellow-400 to-yellow-500 px-6 py-3 text-center">
+                    {/* Success/Info Badge */}
+                    <div className={`px-6 py-3 text-center ${isAlreadySubmitted ? 'bg-gradient-to-r from-blue-400 to-blue-500' : 'bg-gradient-to-r from-yellow-400 to-yellow-500'}`}>
                         <div className="flex items-center justify-center gap-2">
-                            <svg className="w-5 h-5 text-gray-900" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                            </svg>
-                            <span className="text-gray-900 font-semibold">{t('completionPercentage')}</span>
+                            {isAlreadySubmitted ? (
+                                <>
+                                    <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                    </svg>
+                                    <span className="text-white font-semibold">{t('quizCompleted')}</span>
+                                </>
+                            ) : (
+                                <>
+                                    <svg className="w-5 h-5 text-gray-900" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                    </svg>
+                                    <span className="text-gray-900 font-semibold">{t('completionPercentage')}</span>
+                                </>
+                            )}
                         </div>
                     </div>
 
                     <div className="p-8 lg:p-12 text-center">
                         {/* Completion Icon */}
-                        <div className="mb-6 inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full">
-                            <svg className="w-10 h-10 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                            </svg>
+                        <div className={`mb-6 inline-flex items-center justify-center w-20 h-20 ${isAlreadySubmitted ? 'bg-blue-100' : 'bg-green-100'} rounded-full`}>
+                            {isAlreadySubmitted ? (
+                                <svg className="w-10 h-10 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                                    <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3.5V8H5a1 1 0 00-1 1v10a1 1 0 001 1h12a1 1 0 001-1V9a1 1 0 00-1-1h-1V5.5A2.5 2.5 0 0012.5 3h-5zM6 5a1 1 0 00-1 1v3h10V6a1 1 0 00-1-1H6z" clipRule="evenodd" />
+                                </svg>
+                            ) : (
+                                <svg className="w-10 h-10 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                </svg>
+                            )}
                         </div>
 
                         {/* Thank You Title */}
                         <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-                            {t('thankYou')}
+                            {isAlreadySubmitted ? t('quizCompleted') : t('thankYou')}
                         </h1>
 
                         {/* Feedback Message */}
                         <p className="text-gray-600 text-lg mb-8 max-w-2xl mx-auto leading-relaxed">
-                            {t('feedbackReceived')}
+                            {isAlreadySubmitted ? t('alreadySubmitted') : t('feedbackReceived')}
                         </p>
 
                         {/* Person Image */}

@@ -26,6 +26,7 @@ interface QuizQuestionProps {
     showPrevious: boolean
     isLastQuestion: boolean
     lang: 'en' | 'ar'
+    isSubmitting?: boolean
 }
 
 export default function QuizQuestion({
@@ -37,7 +38,8 @@ export default function QuizQuestion({
     onPrevious,
     showPrevious,
     isLastQuestion,
-    lang
+    lang,
+    isSubmitting = false
 }: QuizQuestionProps) {
     const t = useTranslations('quiz')
     const [localSelectedAnswer, setLocalSelectedAnswer] = useState<string | undefined>(selectedAnswer)
@@ -171,16 +173,21 @@ export default function QuizQuestion({
                                 {showPrevious && (
                                     <button
                                         onClick={onPrevious}
-                                        className="px-8 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-all"
+                                        disabled={isSubmitting}
+                                        className="px-8 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         {t('previousQuestion')}
                                     </button>
                                 )}
                                 <button
                                     onClick={handleNext}
-                                    className="flex-1 bg-primary hover:bg-primary-700 text-white font-semibold py-3 px-8 rounded-xl transition-all transform hover:scale-105 shadow-lg hover:shadow-xl"
+                                    disabled={isSubmitting}
+                                    className="flex-1 bg-primary hover:bg-primary-700 text-white font-semibold py-3 px-8 rounded-xl transition-all transform hover:scale-105 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                                 >
-                                    {isLastQuestion ? t('submitQuiz') : t('nextQuestion')}
+                                    {isSubmitting
+                                        ? t('submitting')
+                                        : (isLastQuestion ? t('submitQuiz') : t('nextQuestion'))
+                                    }
                                 </button>
                             </div>
                         </div>

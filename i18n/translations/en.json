@@ -209,7 +209,17 @@
     "good": "Good",
     "average": "Average",
     "belowAverage": "Below Average",
-    "poor": "Poor"
+    "poor": "Poor",
+    "alreadySubmitted": "You have already completed this quiz",
+    "submissionFailed": "Failed to submit quiz",
+    "submissionFailedDesc": "Please check your connection and try again",
+    "tryAgain": "Try Again",
+    "submittingQuiz": "Submitting your answers...",
+    "errorOccurred": "An error occurred",
+    "loginRequired": "Please login to continue",
+    "quizNotFound": "Quiz not found",
+    "quizInactive": "This quiz is not currently active",
+    "backToQuiz": "Back to Quiz"
   },
   "auth": {
     "organizationName": "Community Development Authority",
