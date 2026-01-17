@@ -8,6 +8,7 @@ export type AuditCategory =
   | 'registration'
   | 'pending_signup'
   | 'export'
+  | 'quiz'
 
 export type AuditAction =
   // User actions
@@ -27,6 +28,10 @@ export type AuditAction =
   // Export actions
   | 'export.users'
   | 'export.pending_signups'
+  // Quiz actions
+  | 'quiz.create'
+  | 'quiz.update'
+  | 'quiz.delete'
 
 export type AuditStatus = 'success' | 'failure'
 
@@ -36,6 +41,7 @@ export type AuditTargetType =
   | 'pending_signup'
   | 'export'
   | 'bulk'
+  | 'quiz'
 
 export interface AuditLogEntry {
   id: string
@@ -155,3 +161,22 @@ export interface ExportDetails {
   recordCount: number
   filters?: Record<string, string>
 }
+
+export interface QuizCreateDetails {
+  quizTitle: string
+  quizSlug: string
+  questionCount: number
+}
+
+export interface QuizUpdateDetails {
+  quizTitle: string
+  quizSlug: string
+  changedFields: string[]
+}
+
+export interface QuizDeleteDetails {
+  quizTitle: string
+  quizSlug: string
+  submissionCount?: number
+}
+

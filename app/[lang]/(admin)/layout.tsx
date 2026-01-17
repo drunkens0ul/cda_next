@@ -4,7 +4,7 @@ import AdminRoute from '@/components/AdminRoute'
 import Link from 'next/link'
 import { useParams, usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { UsersIcon, CalendarIcon, HomeIcon, ChartIcon, ClockIcon, ShieldIcon } from '@/components/icons'
+import { UsersIcon, CalendarIcon, HomeIcon, ChartIcon, ClockIcon, ShieldIcon, QuizIcon } from '@/components/icons'
 import { defaultLocale } from '@/i18n/config'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -72,6 +72,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               >
                 <CalendarIcon className="w-5 h-5" />
                 {t('events')}
+              </Link>
+              <Link
+                href={`/${lang}/admin/quizzes`}
+                className={`flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm ${
+                  isActive('/admin/quizzes')
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <QuizIcon className="w-5 h-5" />
+                {t('quizzes')}
               </Link>
               <Link
                 href={`/${lang}/admin/pending-signups`}

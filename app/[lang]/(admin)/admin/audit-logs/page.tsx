@@ -27,6 +27,9 @@ const ACTION_LABELS: Record<AuditAction, string> = {
   'pending_signup.bulk_send_verification': 'Bulk Verification Emails',
   'export.users': 'Users Exported',
   'export.pending_signups': 'Pending Signups Exported',
+  'quiz.create': 'Quiz Created',
+  'quiz.update': 'Quiz Updated',
+  'quiz.delete': 'Quiz Deleted',
 }
 
 const CATEGORY_COLORS: Record<AuditCategory, string> = {
@@ -35,6 +38,7 @@ const CATEGORY_COLORS: Record<AuditCategory, string> = {
   registration: 'bg-green-100 text-green-800',
   pending_signup: 'bg-yellow-100 text-yellow-800',
   export: 'bg-gray-100 text-gray-800',
+  quiz: 'bg-pink-100 text-pink-800',
 }
 
 function AuditLogsContent() {

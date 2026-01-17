@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import QuizStart from '@/components/quiz/QuizStart'
@@ -49,6 +49,7 @@ export default function QuizPage() {
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [submitError, setSubmitError] = useState<string | null>(null)
     const [loadingError, setLoadingError] = useState<string | null>(null)
+    const startTimeRef = useRef<number | null>(null)
 
     // Check authentication
     useEffect(() => {
@@ -113,6 +114,7 @@ export default function QuizPage() {
     }, [slug, lang, isCheckingAuth, router, t])
 
     const handleStartQuiz = () => {
+        startTimeRef.current = Date.now()
         setCurrentStep('question')
         setCurrentQuestionIndex(0)
     }
@@ -144,13 +146,18 @@ export default function QuizPage() {
                 answerId
             }))
 
+            const sessionDuration = startTimeRef.current
+                ? Math.floor((Date.now() - startTimeRef.current) / 1000)
+                : undefined
+
             const response = await fetch('/api/quiz/submit', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
                 body: JSON.stringify({
                     quizId: quiz?.id,
-                    responses
+                    responses,
+                    sessionDuration
                 }),
             })
 

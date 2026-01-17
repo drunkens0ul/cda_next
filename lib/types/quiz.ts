@@ -132,3 +132,131 @@ export interface SubmitQuizOptions {
     userAgent?: string
     sessionDuration?: number
 }
+
+export interface QuizListItem {
+    id: string
+    slug: string
+    title: string
+    titleAr: string
+    submissionCount: number
+    isActive: boolean
+    eventId: string | null
+    createdAt: Date
+}
+
+export type QuizWithQuestions = Quiz
+
+export interface CreateQuizData {
+    slug: string
+    title: string
+    titleAr: string
+    description: string | null
+    descriptionAr: string | null
+    eventId: string | null
+    isActive: boolean
+    requiresAuth: boolean
+    allowMultipleSubmissions: boolean
+    questions: CreateQuestionData[]
+}
+
+export interface UpdateQuizData {
+    title: string
+    titleAr: string
+    description: string | null
+    descriptionAr: string | null
+    eventId: string | null
+    isActive: boolean
+    requiresAuth: boolean
+    allowMultipleSubmissions: boolean
+    questions: UpdateQuestionData[]
+}
+
+export interface CreateQuestionData {
+    questionOrder: number
+    questionText: string
+    questionTextAr: string
+    questionType: 'multiple_choice' | 'rating' | 'text'
+    isRequired: boolean
+    answers: CreateAnswerData[]
+}
+
+export interface UpdateQuestionData {
+    id?: string
+    questionOrder: number
+    questionText: string
+    questionTextAr: string
+    questionType: 'multiple_choice' | 'rating' | 'text'
+    isRequired: boolean
+    isDeleted?: boolean
+    answers: UpdateAnswerData[]
+}
+
+export interface CreateAnswerData {
+    answerOrder: number
+    answerText: string
+    answerTextAr: string
+    answerValue: number | null
+}
+
+export interface UpdateAnswerData {
+    id?: string
+    answerOrder: number
+    answerText: string
+    answerTextAr: string
+    answerValue: number | null
+    isDeleted?: boolean
+}
+
+export interface SubmissionListItem {
+    id: string
+    userId: string
+    userEmail: string
+    firstName: string
+    lastName: string | null
+    submittedAt: Date
+    ipAddress: string | null
+    sessionDurationSeconds: number | null
+}
+
+export interface SubmissionDetail extends SubmissionListItem {
+    responses: DetailedResponse[]
+}
+
+export interface DetailedResponse {
+    questionId: string
+    question: { en: string; ar: string }
+    answerId: string | null
+    answer: { en: string; ar: string } | null
+    responseText: string | null
+    responseValue: number | null
+}
+
+export interface GetSubmissionsParams {
+    page?: number
+    limit?: number
+    search?: string
+    startDate?: string
+    endDate?: string
+}
+
+export interface GetSubmissionsResult {
+    submissions: SubmissionListItem[]
+    pagination: PaginationInfo
+}
+
+export interface PaginationInfo {
+    total: number
+    page: number
+    limit: number
+    totalPages: number
+}
+
+export interface DetailedAnalytics extends QuizAnalytics {
+    submissionsByDate: DateDistribution[]
+}
+
+export interface DateDistribution {
+    date: string
+    count: number
+}
+
