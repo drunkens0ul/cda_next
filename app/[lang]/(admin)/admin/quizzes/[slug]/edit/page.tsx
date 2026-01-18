@@ -301,6 +301,15 @@ export default function EditQuizPage() {
           <div className="bg-white shadow-sm rounded-lg p-6 space-y-6">
             <h3 className="text-lg font-medium text-gray-900">{t('quizSettings')}</h3>
 
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {t('quizSlug')}
+              </label>
+              <div className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-600 text-sm">
+                {quiz.slug}
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">

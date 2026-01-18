@@ -147,7 +147,7 @@ export interface QuizListItem {
 export type QuizWithQuestions = Quiz
 
 export interface CreateQuizData {
-    slug: string
+    slug?: string
     title: string
     titleAr: string
     description: string | null
@@ -258,5 +258,37 @@ export interface DetailedAnalytics extends QuizAnalytics {
 export interface DateDistribution {
     date: string
     count: number
+}
+
+// ============================================================================
+// Progressive Submission Types
+// ============================================================================
+
+export interface QuizAttempt {
+    id: string
+    quizId: string
+    userId: string
+    currentQuestionIndex: number
+    startedAt: Date
+    lastActivityAt: Date
+    totalActiveSeconds: number
+    isCompleted: boolean
+}
+
+export interface AttemptResponse {
+    questionId: string
+    answerId: string
+}
+
+export interface QuizAttemptRow {
+    id: string
+    quiz_id: string
+    user_id: string
+    current_question_index: number
+    started_at: Date
+    last_activity_at: Date
+    total_active_seconds: number
+    is_completed: boolean
+    is_deleted: boolean
 }
 

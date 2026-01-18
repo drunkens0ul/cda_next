@@ -1,0 +1,374 @@
+// CDA Application Database Schema
+// Generated from PostgreSQL migrations
+// Created: 2026-01-17
+
+// ============================================================================
+// USER MANAGEMENT
+// ============================================================================
+
+Table users {
+  id uuid [primary key]
+  email varchar(255) [unique, not null]
+  first_name varchar(255) [not null]
+  last_name varchar(255)
+  phone_number varchar(50)
+  role varchar(20) [default: 'user', note: 'user or admin']
+  email_verified boolean [default: false]
+  last_login_at timestamp
+  is_deleted boolean [default: false]
+  deleted_at timestamp
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  indexes {
+    (email) [unique]
+    (email_verified)
+    (role)
+    (is_deleted)
+    (last_login_at)
+  }
+}
+
+Table verification_tokens {
+  id uuid [primary key]
+  user_id uuid [ref: > users.id]
+  email varchar(255) [not null]
+  token varchar(64) [unique, not null]
+  token_type varchar(20) [not null, note: 'signup or login']
+  polling_token varchar(64)
+  verified_user_id uuid
+  expires_at timestamp [not null]
+  used_at timestamp
+  is_deleted boolean [default: false]
+  deleted_at timestamp
+  created_at timestamp [default: `now()`]
+  
+  indexes {
+    (token) [unique]
+    (email)
+    (expires_at)
+    (user_id)
+    (polling_token)
+    (is_deleted)
+  }
+}
+
+Table sessions {
+  id uuid [primary key]
+  user_id uuid [ref: > users.id, not null]
+  session_token varchar(64) [unique, not null]
+  expires_at timestamp [not null]
+  ip_address inet
+  user_agent text
+  is_deleted boolean [default: false]
+  deleted_at timestamp
+  created_at timestamp [default: `now()`]
+  last_active_at timestamp [default: `now()`]
+  
+  indexes {
+    (session_token) [unique]
+    (user_id)
+    (expires_at)
+    (is_deleted)
+  }
+}
+
+Table pending_signups {
+  id uuid [primary key]
+  email varchar(255) [unique, not null]
+  first_name varchar(255) [not null]
+  last_name varchar(255)
+  phone_number varchar(50)
+  token_id uuid [ref: > verification_tokens.id, not null]
+  is_deleted boolean [default: false]
+  deleted_at timestamp
+  created_at timestamp [default: `now()`]
+  expires_at timestamp [not null]
+  
+  indexes {
+    (email) [unique]
+    (expires_at)
+    (token_id)
+    (is_deleted)
+  }
+}
+
+// ============================================================================
+// RATE LIMITING
+// ============================================================================
+
+Table rate_limits {
+  id uuid [primary key]
+  identifier varchar(255) [not null]
+  action_type varchar(50) [not null]
+  window_start timestamp [default: `now()`]
+  request_count integer [default: 1]
+  
+  indexes {
+    (identifier, action_type, window_start) [unique]
+  }
+}
+
+// ============================================================================
+// MARKETING
+// ============================================================================
+
+Table marketing_email_list {
+  id uuid [primary key]
+  email varchar(255) [unique, not null]
+  subscribed_at timestamp [default: `now()`]
+  source varchar(100) [default: 'website_footer']
+  is_active boolean [default: true]
+  unsubscribed_at timestamp
+  ip_address varchar(45)
+  user_agent text
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  indexes {
+    (email) [unique]
+    (is_active)
+    (source)
+    (subscribed_at)
+  }
+  
+  note: 'Newsletter subscription list separate from application users'
+}
+
+// ============================================================================
+// EVENTS & REGISTRATIONS
+// ============================================================================
+
+Table events {
+  id uuid [primary key]
+  slug varchar(255) [unique, not null]
+  title varchar(500) [not null]
+  title_ar varchar(500)
+  description text
+  description_ar text
+  date date [not null]
+  start_time time
+  end_time time
+  location varchar(500)
+  location_ar varchar(500)
+  is_virtual boolean [default: false]
+  max_attendees integer
+  image_url varchar(500)
+  status varchar(50) [default: 'upcoming', note: 'upcoming, ongoing, completed, cancelled']
+  show_join_button boolean [default: false]
+  meeting_url varchar(500)
+  is_highlighted boolean [default: false, note: 'Only one event can be highlighted']
+  registration_deadline timestamp
+  is_deleted boolean [default: false]
+  deleted_at timestamp
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  indexes {
+    (slug) [unique]
+    (status)
+    (date)
+    (is_deleted)
+    (is_highlighted) [unique]
+  }
+  
+  note: 'All times stored in UTC with timezone awareness'
+}
+
+Table event_registrations {
+  id uuid [primary key]
+  user_id uuid [ref: > users.id, not null]
+  event_id uuid [ref: > events.id, not null]
+  status varchar(50) [default: 'registered', note: 'registered, attended, no_show, cancelled']
+  registered_at timestamp [default: `now()`]
+  attended_at timestamp
+  cancelled_at timestamp
+  confirmation_email_sent_at timestamp
+  is_deleted boolean [default: false]
+  deleted_at timestamp
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  indexes {
+    (user_id)
+    (event_id)
+    (status)
+    (is_deleted)
+    (event_id, confirmation_email_sent_at)
+  }
+  
+  note: 'unique constraint on (user_id, event_id)'
+}
+
+// ============================================================================
+// AUDIT LOGGING
+// ============================================================================
+
+Table audit_logs {
+  id uuid [primary key]
+  admin_id uuid [ref: > users.id, not null]
+  admin_email varchar(255) [not null]
+  action varchar(100) [not null, note: 'user.role_change, event.create, etc.']
+  category varchar(50) [not null, note: 'user, event, registration, pending_signup, export']
+  target_type varchar(50)
+  target_id uuid
+  target_identifier varchar(255)
+  details jsonb
+  ip_address inet
+  user_agent text
+  status varchar(20) [default: 'success', note: 'success or failure']
+  error_message text
+  created_at timestamp [default: `now()`]
+  
+  indexes {
+    (admin_id)
+    (action)
+    (category)
+    (target_type)
+    (target_id)
+    (created_at)
+    (status)
+    (category, created_at)
+  }
+  
+  note: 'Tracks all admin actions for security and compliance'
+}
+
+// ============================================================================
+// QUIZ SYSTEM
+// ============================================================================
+
+Table quizzes {
+  id uuid [primary key]
+  slug varchar(255) [unique, not null]
+  title varchar(500) [not null]
+  title_ar varchar(500) [not null]
+  description text
+  description_ar text
+  event_id uuid [ref: > events.id, note: 'Optional link to event']
+  is_active boolean [default: true]
+  requires_auth boolean [default: true]
+  allow_multiple_submissions boolean [default: false]
+  is_deleted boolean [default: false]
+  deleted_at timestamp
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  indexes {
+    (slug) [unique]
+    (event_id)
+    (is_active)
+    (is_deleted)
+  }
+}
+
+Table quiz_questions {
+  id uuid [primary key]
+  quiz_id uuid [ref: > quizzes.id, not null]
+  question_order integer [not null, note: '1-indexed display order']
+  question_text varchar(1000) [not null]
+  question_text_ar varchar(1000) [not null]
+  question_type varchar(50) [default: 'multiple_choice', note: 'multiple_choice, rating, text']
+  is_required boolean [default: true]
+  is_deleted boolean [default: false]
+  deleted_at timestamp
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  indexes {
+    (quiz_id)
+    (quiz_id, question_order)
+    (is_deleted)
+  }
+  
+  note: 'unique constraint on (quiz_id, question_order)'
+}
+
+Table quiz_answers {
+  id uuid [primary key]
+  question_id uuid [ref: > quiz_questions.id, not null]
+  answer_order integer [not null, note: '1-indexed display order']
+  answer_text varchar(500) [not null]
+  answer_text_ar varchar(500) [not null]
+  answer_value integer
+  is_deleted boolean [default: false]
+  deleted_at timestamp
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  indexes {
+    (question_id)
+    (question_id, answer_order)
+    (is_deleted)
+  }
+  
+  note: 'unique constraint on (question_id, answer_order)'
+}
+
+Table quiz_submissions {
+  id uuid [primary key]
+  quiz_id uuid [ref: > quizzes.id, not null]
+  user_id uuid [ref: > users.id, note: 'NULL if anonymous submission allowed']
+  event_id uuid [ref: > events.id]
+  submitted_at timestamp [default: `now()`]
+  ip_address inet
+  user_agent text
+  session_duration_seconds integer
+  is_deleted boolean [default: false]
+  deleted_at timestamp
+  created_at timestamp [default: `now()`]
+  
+  indexes {
+    (quiz_id)
+    (user_id)
+    (event_id)
+    (submitted_at)
+    (is_deleted)
+  }
+}
+
+Table quiz_responses {
+  id uuid [primary key]
+  submission_id uuid [ref: > quiz_submissions.id, not null]
+  question_id uuid [ref: > quiz_questions.id, not null]
+  answer_id uuid [ref: > quiz_answers.id, note: 'For multiple choice questions']
+  response_text text [note: 'For text-based questions']
+  response_value integer
+  is_deleted boolean [default: false]
+  deleted_at timestamp
+  created_at timestamp [default: `now()`]
+  
+  indexes {
+    (submission_id)
+    (question_id)
+    (answer_id)
+    (is_deleted)
+  }
+  
+  note: 'unique constraint on (submission_id, question_id)'
+}
+
+// ============================================================================
+// RELATIONSHIPS
+// ============================================================================
+
+Ref: users.id - verification_tokens.user_id
+Ref: users.id - sessions.user_id
+Ref: users.id - audit_logs.admin_id
+Ref: users.id - event_registrations.user_id
+Ref: users.id - quiz_submissions.user_id
+
+Ref: verification_tokens.id - pending_signups.token_id
+
+Ref: events.id - event_registrations.event_id
+Ref: events.id - quizzes.event_id
+Ref: events.id - quiz_submissions.event_id
+
+Ref: quizzes.id - quiz_questions.quiz_id
+Ref: quizzes.id - quiz_submissions.quiz_id
+
+Ref: quiz_questions.id - quiz_answers.question_id
+Ref: quiz_questions.id - quiz_responses.question_id
+
+Ref: quiz_submissions.id - quiz_responses.submission_id
+Ref: quiz_answers.id - quiz_responses.answer_id

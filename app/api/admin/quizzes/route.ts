@@ -61,9 +61,9 @@ export async function POST(request: NextRequest) {
     const body: CreateQuizData = await request.json()
 
     // Validate required fields
-    if (!body.slug || !body.title || !body.titleAr) {
+    if (!body.title || !body.titleAr) {
       return NextResponse.json(
-        { success: false, message: 'Slug, title, and Arabic title are required' },
+        { success: false, message: 'Title and Arabic title are required' },
         { status: 400 }
       )
     }

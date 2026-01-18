@@ -26,9 +26,17 @@ interface Quiz {
     description: { en: string; ar: string }
     questions: QuizQuestion[]
     allowMultipleSubmissions: boolean
+    eventId?: string | null
     userStatus?: {
         hasSubmitted: boolean
         allowMultipleSubmissions: boolean
+    } | null
+    attemptInfo?: {
+        attemptId: string
+        currentQuestionIndex: number
+        startedAt: Date
+        totalActiveSeconds: number
+        responses: Array<{ questionId: string; answerId: string }>
     } | null
 }
 
@@ -45,11 +53,66 @@ export default function QuizPage() {
     const [quiz, setQuiz] = useState<Quiz | null>(null)
     const [currentStep, setCurrentStep] = useState<'start' | 'question' | 'complete' | 'already_submitted' | 'error'>('start')
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
+    const [attemptId, setAttemptId] = useState<string | null>(null)
     const [answers, setAnswers] = useState<Record<string, string>>({})
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [submitError, setSubmitError] = useState<string | null>(null)
     const [loadingError, setLoadingError] = useState<string | null>(null)
-    const startTimeRef = useRef<number | null>(null)
+    const activityTimerRef = useRef<NodeJS.Timeout | null>(null)
+
+    // Activity tracking
+    const startActivityTracking = (currentAttemptId: string) => {
+        // Clear existing timer if any
+        if (activityTimerRef.current) {
+            clearInterval(activityTimerRef.current)
+        }
+
+        // Update activity every 30 seconds
+        activityTimerRef.current = setInterval(async () => {
+            if (document.visibilityState === 'visible') {
+                try {
+                    await fetch('/api/quiz/update-activity', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({ attemptId: currentAttemptId })
+                    })
+                } catch (error) {
+                    console.error('Failed to update activity:', error)
+                }
+            }
+        }, 30000)
+    }
+
+    const stopActivityTracking = () => {
+        if (activityTimerRef.current) {
+            clearInterval(activityTimerRef.current)
+            activityTimerRef.current = null
+        }
+    }
+
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => {
+            stopActivityTracking()
+        }
+    }, [])
+
+    // Handle visibility changes
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible' && attemptId) {
+                startActivityTracking(attemptId)
+            } else {
+                stopActivityTracking()
+            }
+        }
+
+        document.addEventListener('visibilitychange', handleVisibilityChange)
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange)
+        }
+    }, [attemptId])
 
     // Check authentication
     useEffect(() => {
@@ -100,6 +163,17 @@ export default function QuizPage() {
                 // Check if user already submitted
                 if (data.userStatus?.hasSubmitted && !data.allowMultipleSubmissions) {
                     setCurrentStep('already_submitted')
+                } else if (data.attemptInfo) {
+                    // Resume existing attempt
+                    setAttemptId(data.attemptInfo.attemptId)
+                    setCurrentQuestionIndex(data.attemptInfo.currentQuestionIndex)
+                    const responsesMap = data.attemptInfo.responses.reduce((acc: Record<string, string>, r: { questionId: string; answerId: string }) => ({
+                        ...acc,
+                        [r.questionId]: r.answerId
+                    }), {})
+                    setAnswers(responsesMap)
+                    setCurrentStep('question')
+                    startActivityTracking(data.attemptInfo.attemptId)
                 }
             } catch (error) {
                 console.error('Failed to fetch quiz:', error)
@@ -113,51 +187,102 @@ export default function QuizPage() {
         fetchQuiz()
     }, [slug, lang, isCheckingAuth, router, t])
 
-    const handleStartQuiz = () => {
-        startTimeRef.current = Date.now()
-        setCurrentStep('question')
-        setCurrentQuestionIndex(0)
+    const handleStartQuiz = async () => {
+        if (!quiz) return
+
+        try {
+            const response = await fetch('/api/quiz/start', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ quizId: quiz.id })
+            })
+
+            if (!response.ok) {
+                const errorData = await response.json()
+                throw new Error(errorData.error || 'Failed to start quiz')
+            }
+
+            const data = await response.json()
+            setAttemptId(data.attemptId)
+            setCurrentStep('question')
+            setCurrentQuestionIndex(data.currentQuestionIndex)
+            startActivityTracking(data.attemptId)
+
+            // Save to localStorage for recovery
+            localStorage.setItem(`quiz_attempt_${quiz.id}`, data.attemptId)
+        } catch (error) {
+            console.error('Failed to start quiz:', error)
+            const errorMessage = error instanceof Error ? error.message : 'Failed to start quiz'
+            setLoadingError(errorMessage)
+            setCurrentStep('error')
+        }
     }
 
-    const handleNextQuestion = (questionId: string, answerId: string) => {
+    const handleNextQuestion = async (questionId: string, answerId: string) => {
+        if (!attemptId) return
+
         setAnswers(prev => ({ ...prev, [questionId]: answerId }))
 
-        if (quiz && currentQuestionIndex < quiz.questions.length - 1) {
-            setCurrentQuestionIndex(prev => prev + 1)
-        } else {
-            handleSubmit({ ...answers, [questionId]: answerId })
+        try {
+            const response = await fetch('/api/quiz/submit-answer', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ attemptId, questionId, answerId })
+            })
+
+            if (!response.ok) {
+                const errorData = await response.json()
+
+                if (response.status === 409 && errorData.error === 'questionAlreadyAnswered') {
+                    setSubmitError(t('questionAlreadyAnswered'))
+                    setTimeout(() => {
+                        const nextIndex = currentQuestionIndex + 1
+                        if (quiz && nextIndex < quiz.questions.length) {
+                            setSubmitError(null)
+                            setCurrentQuestionIndex(nextIndex)
+                        }
+                    }, 2000)
+                    return
+                }
+
+                throw new Error(errorData.error || 'Failed to submit answer')
+            }
+
+            const data = await response.json()
+
+            if (data.isComplete) {
+                await handleSubmit()
+            } else {
+                setCurrentQuestionIndex(data.nextQuestionIndex)
+            }
+        } catch (error) {
+            console.error('Failed to submit answer:', error)
+            const errorMessage = error instanceof Error ? error.message : 'Failed to submit answer'
+            setSubmitError(errorMessage)
         }
     }
 
     const handlePreviousQuestion = () => {
-        if (currentQuestionIndex > 0) {
-            setCurrentQuestionIndex(prev => prev - 1)
-        }
+        // Removed - no going back in progressive submission mode
     }
 
-    const handleSubmit = async (finalAnswers: Record<string, string>) => {
+    const handleSubmit = async () => {
+        if (!attemptId || !quiz) return
+
         setIsSubmitting(true)
         setSubmitError(null)
+        stopActivityTracking()
 
         try {
-            // Convert answers to API format
-            const responses = Object.entries(finalAnswers).map(([questionId, answerId]) => ({
-                questionId,
-                answerId
-            }))
-
-            const sessionDuration = startTimeRef.current
-                ? Math.floor((Date.now() - startTimeRef.current) / 1000)
-                : undefined
-
             const response = await fetch('/api/quiz/submit', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
                 body: JSON.stringify({
-                    quizId: quiz?.id,
-                    responses,
-                    sessionDuration
+                    attemptId,
+                    eventId: quiz.eventId
                 }),
             })
 
@@ -180,6 +305,11 @@ export default function QuizPage() {
                 throw new Error(errorMessage)
             }
 
+            // Clear localStorage
+            if (quiz) {
+                localStorage.removeItem(`quiz_attempt_${quiz.id}`)
+            }
+
             setCurrentStep('complete')
         } catch (error) {
             console.error('Failed to submit quiz:', error)
@@ -191,7 +321,7 @@ export default function QuizPage() {
     }
 
     const handleRetrySubmit = () => {
-        handleSubmit(answers)
+        handleSubmit()
     }
 
     if (isCheckingAuth || isLoading) {
@@ -263,7 +393,7 @@ export default function QuizPage() {
                         selectedAnswer={answers[quiz.questions[currentQuestionIndex].id]}
                         onNext={handleNextQuestion}
                         onPrevious={handlePreviousQuestion}
-                        showPrevious={currentQuestionIndex > 0}
+                        showPrevious={false}
                         isLastQuestion={currentQuestionIndex === quiz.questions.length - 1}
                         lang={lang}
                         isSubmitting={isSubmitting}

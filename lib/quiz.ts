@@ -1,4 +1,6 @@
-import { query, transaction } from './db'
+import { query, transaction, getClient } from './db'
+import type { PoolClient } from 'pg'
+import { generateSlug } from './utils'
 import type {
     Quiz,
     QuizQuestion,
@@ -26,7 +28,10 @@ import type {
     GetSubmissionsResult,
     PaginationInfo,
     DetailedAnalytics,
-    DateDistribution
+    DateDistribution,
+    QuizAttempt,
+    AttemptResponse,
+    QuizAttemptRow
 } from './types/quiz'
 
 // ============================================================================
@@ -398,67 +403,160 @@ export async function getAllQuizzesForAdmin(): Promise<QuizListItem[]> {
 /**
  * Create a new quiz with questions and answers
  */
+async function generateUniqueSlug(baseSlug: string, client: PoolClient): Promise<string> {
+  let slug = baseSlug
+  let counter = 1
+
+  while (true) {
+    const result = await client.query<{ exists: boolean }>(`
+      SELECT EXISTS(
+        SELECT 1 FROM quizzes
+        WHERE slug = $1
+      ) as exists
+    `, [slug])
+
+    if (!result.rows[0].exists) {
+      return slug
+    }
+
+    slug = `${baseSlug}-${counter}`
+    counter++
+  }
+}
+
 export async function createQuiz(data: CreateQuizData): Promise<Quiz> {
     return await transaction(async (client) => {
-        // Create quiz
-        const quizResult = await client.query<QuizRow>(`
-      INSERT INTO quizzes
-      (slug, title, title_ar, description, description_ar, event_id,
-       is_active, requires_auth, allow_multiple_submissions)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-      RETURNING *
-    `, [
-            data.slug,
-            data.title,
-            data.titleAr,
-            data.description,
-            data.descriptionAr,
-            data.eventId,
-            data.isActive,
-            data.requiresAuth,
-            data.allowMultipleSubmissions
-        ])
+        let slug = data.slug
+        let attempts = 0
+        const maxAttempts = 5
+        let lastError: Error | null = null
 
-        const quizId = quizResult.rows[0].id
+        while (attempts < maxAttempts) {
+            attempts++
 
-        // Create questions and answers
-        for (const question of data.questions) {
-            const questionResult = await client.query<QuestionRow>(`
-        INSERT INTO quiz_questions
-        (quiz_id, question_order, question_text, question_text_ar,
-         question_type, is_required)
-        VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING *
-      `, [
-                    quizId,
-                    question.questionOrder,
-                    question.questionText,
-                    question.questionTextAr,
-                    question.questionType,
-                    question.isRequired
-                ])
+            try {
+                if (!slug) {
+                    const baseSlug = generateSlug(data.title)
+                    slug = await generateUniqueSlug(baseSlug, client)
+                }
 
-            const questionId = questionResult.rows[0].id
-
-            // Create answers
-            for (const answer of question.answers) {
-                await client.query<AnswerRow>(`
-          INSERT INTO quiz_answers
-          (question_id, answer_order, answer_text, answer_text_ar, answer_value)
-          VALUES ($1, $2, $3, $4, $5)
-        `, [
-                        questionId,
-                        answer.answerOrder,
-                        answer.answerText,
-                        answer.answerTextAr,
-                        answer.answerValue
+                // Create quiz
+                const quizResult = await client.query<QuizRow>(`
+              INSERT INTO quizzes
+              (slug, title, title_ar, description, description_ar, event_id,
+               is_active, requires_auth, allow_multiple_submissions)
+              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+              RETURNING *
+            `, [
+                        slug,
+                        data.title,
+                        data.titleAr,
+                        data.description,
+                        data.descriptionAr,
+                        data.eventId,
+                        data.isActive,
+                        data.requiresAuth,
+                        data.allowMultipleSubmissions
                     ])
+
+                const quizId = quizResult.rows[0].id
+
+                // Create questions and answers
+                for (const question of data.questions) {
+                    const questionResult = await client.query<QuestionRow>(`
+                INSERT INTO quiz_questions
+                (quiz_id, question_order, question_text, question_text_ar,
+                 question_type, is_required)
+                VALUES ($1, $2, $3, $4, $5, $6)
+                RETURNING *
+              `, [
+                            quizId,
+                            question.questionOrder,
+                            question.questionText,
+                            question.questionTextAr,
+                            question.questionType,
+                            question.isRequired
+                        ])
+
+                    const questionId = questionResult.rows[0].id
+
+                    // Create answers
+                    for (const answer of question.answers) {
+                        await client.query<AnswerRow>(`
+                  INSERT INTO quiz_answers
+                  (question_id, answer_order, answer_text, answer_text_ar, answer_value)
+                  VALUES ($1, $2, $3, $4, $5)
+                `, [
+                                questionId,
+                                answer.answerOrder,
+                                answer.answerText,
+                                answer.answerTextAr,
+                                answer.answerValue
+                            ])
+                    }
+                }
+
+                // Fetch questions using the transaction client
+                const questionsResult = await client.query<QuestionRow>(`
+                    SELECT id, quiz_id, question_order, question_text, question_text_ar,
+                           question_type, is_required, is_deleted
+                    FROM quiz_questions
+                    WHERE quiz_id = $1 AND is_deleted = FALSE
+                    ORDER BY question_order ASC
+                `, [quizId])
+
+                const questionIds = questionsResult.rows.map(q => q.id)
+
+                // Fetch answers for all questions using the transaction client
+                let answersResult = { rows: [] as AnswerRow[] }
+                if (questionIds.length > 0) {
+                    answersResult = await client.query<AnswerRow>(`
+                        SELECT id, question_id, answer_order, answer_text, answer_text_ar,
+                               answer_value, is_deleted
+                        FROM quiz_answers
+                        WHERE question_id = ANY($1) AND is_deleted = FALSE
+                        ORDER BY question_id, answer_order ASC
+                    `, [questionIds])
+                }
+
+                // Build questions with their answers
+                const questions: QuizQuestion[] = questionsResult.rows.map(q => {
+                    const questionAnswers = answersResult.rows
+                        .filter(a => a.question_id === q.id)
+                        .map(mapAnswerRow)
+
+                    return {
+                        ...mapQuestionRow(q),
+                        answers: questionAnswers
+                    }
+                })
+
+                // Build full quiz object
+                const quizData = mapQuizRow(quizResult.rows[0])
+                return {
+                    ...quizData,
+                    questions
+                }
+            } catch (error) {
+                lastError = error as Error
+
+                // Check if it's a unique constraint violation
+                const errorMessage = error instanceof Error ? error.message : String(error)
+                if (errorMessage.includes('duplicate key') || errorMessage.includes('unique constraint')) {
+                    // Regenerate slug with suffix for next attempt
+                    const baseSlug = generateSlug(data.title)
+                    const counter = attempts
+                    slug = `${baseSlug}-${counter}`
+                    continue
+                }
+
+                // If it's not a duplicate slug error, throw immediately
+                throw error
             }
         }
 
-        // Return full quiz
-        const fullQuiz = await getQuizBySlug(data.slug)
-        return fullQuiz!
+        // If we exhausted all attempts, throw the last error
+        throw lastError || new Error('Failed to generate unique slug after multiple attempts')
     })
 }
 
@@ -834,5 +932,253 @@ export async function getDetailedQuizAnalytics(quizId: string): Promise<Detailed
             count: parseInt(row.count)
         }))
     }
+}
+
+// ============================================================================
+// Progressive Submission Functions
+// ============================================================================
+
+/**
+ * Start a new quiz attempt for a user
+ */
+export async function startQuizAttempt(userId: string, quizId: string): Promise<string> {
+    const result = await query<QuizAttemptRow>(`
+    INSERT INTO quiz_attempts
+    (quiz_id, user_id, current_question_index, started_at, last_activity_at, total_active_seconds, is_completed)
+    VALUES ($1, $2, 0, NOW(), NOW(), 0, FALSE)
+    RETURNING *
+  `, [quizId, userId])
+
+    return result.rows[0].id
+}
+
+/**
+ * Submit a single answer for a quiz attempt
+ * Returns the next question index
+ */
+export async function submitQuizAnswer(
+    attemptId: string,
+    questionId: string,
+    answerId: string
+): Promise<{ nextQuestionIndex: number; isComplete: boolean }> {
+    return await transaction(async (client) => {
+        // Get current attempt state
+        const attemptResult = await client.query<QuizAttemptRow>(`
+      SELECT * FROM quiz_attempts
+      WHERE id = $1 AND is_deleted = FALSE AND is_completed = FALSE
+      FOR UPDATE
+    `, [attemptId])
+
+        if (attemptResult.rows.length === 0) {
+            throw new Error('Quiz attempt not found or already completed')
+        }
+
+        const attempt = attemptResult.rows[0]
+        const currentQuestionIndex = attempt.current_question_index
+
+        // Check if question was already answered
+        const existingResponse = await client.query<{id: string}>(`
+            SELECT id FROM quiz_responses
+            WHERE attempt_id = $1 AND question_id = $2 AND is_deleted = FALSE
+        `, [attemptId, questionId])
+
+        if (existingResponse.rows.length > 0) {
+            throw new Error('Question already answered')
+        }
+
+        // Insert the response (will fail if constraint violated)
+        await client.query(`
+      INSERT INTO quiz_responses (attempt_id, question_id, answer_id, response_text, response_value)
+      VALUES ($1, $2, $3, NULL, (
+        SELECT answer_value FROM quiz_answers WHERE id = $3
+      ))
+    `, [attemptId, questionId, answerId])
+
+        // Get total number of questions
+        const quizResult = await client.query<{ question_count: string }>(`
+      SELECT COUNT(*) as question_count
+      FROM quiz_questions
+      WHERE quiz_id = $1 AND is_deleted = FALSE
+    `, [attempt.quiz_id])
+
+        const totalQuestions = parseInt(quizResult.rows[0].question_count)
+        const nextQuestionIndex = currentQuestionIndex + 1
+        const isComplete = nextQuestionIndex >= totalQuestions
+
+        // Update attempt: increment question index and update activity
+        const newActivityAt = new Date()
+        const elapsedSeconds = attempt.last_activity_at
+            ? Math.floor((newActivityAt.getTime() - attempt.last_activity_at.getTime()) / 1000)
+            : 0
+
+        await client.query(`
+      UPDATE quiz_attempts
+      SET current_question_index = $1,
+          last_activity_at = $2,
+          total_active_seconds = total_active_seconds + $3,
+          updated_at = NOW()
+      WHERE id = $4
+    `, [nextQuestionIndex, newActivityAt, elapsedSeconds, attemptId])
+
+        return {
+            nextQuestionIndex,
+            isComplete
+        }
+    })
+}
+
+/**
+ * Get a quiz attempt by ID
+ */
+export async function getQuizAttempt(attemptId: string): Promise<QuizAttempt | null> {
+    const result = await query<QuizAttemptRow>(`
+    SELECT * FROM quiz_attempts
+    WHERE id = $1 AND is_deleted = FALSE
+  `, [attemptId])
+
+    if (result.rows.length === 0) {
+        return null
+    }
+
+    const row = result.rows[0]
+    return {
+        id: row.id,
+        quizId: row.quiz_id,
+        userId: row.user_id,
+        currentQuestionIndex: row.current_question_index,
+        startedAt: row.started_at,
+        lastActivityAt: row.last_activity_at,
+        totalActiveSeconds: row.total_active_seconds,
+        isCompleted: row.is_completed
+    }
+}
+
+/**
+ * Get an incomplete quiz attempt for a user and quiz
+ */
+export async function getQuizAttemptByUserAndQuiz(
+    userId: string,
+    quizId: string
+): Promise<QuizAttempt | null> {
+    const result = await query<QuizAttemptRow>(`
+    SELECT * FROM quiz_attempts
+    WHERE user_id = $1 AND quiz_id = $2 AND is_completed = FALSE AND is_deleted = FALSE
+    ORDER BY created_at DESC
+    LIMIT 1
+  `, [userId, quizId])
+
+    if (result.rows.length === 0) {
+        return null
+    }
+
+    const row = result.rows[0]
+    return {
+        id: row.id,
+        quizId: row.quiz_id,
+        userId: row.user_id,
+        currentQuestionIndex: row.current_question_index,
+        startedAt: row.started_at,
+        lastActivityAt: row.last_activity_at,
+        totalActiveSeconds: row.total_active_seconds,
+        isCompleted: row.is_completed
+    }
+}
+
+/**
+ * Get all responses for a quiz attempt
+ */
+export async function getAttemptResponses(attemptId: string): Promise<AttemptResponse[]> {
+    const result = await query<{
+        question_id: string
+        answer_id: string
+    }>(`
+    SELECT question_id, answer_id
+    FROM quiz_responses
+    WHERE attempt_id = $1 AND submission_id IS NULL AND is_deleted = FALSE
+  `, [attemptId])
+
+    return result.rows.map(row => ({
+        questionId: row.question_id,
+        answerId: row.answer_id
+    }))
+}
+
+/**
+ * Finalize a quiz attempt into a submission
+ * Returns the submission ID
+ */
+export async function finalizeQuizSubmission(
+    attemptId: string,
+    options?: SubmitQuizOptions
+): Promise<string> {
+    return await transaction(async (client) => {
+        // Get the attempt
+        const attemptResult = await client.query<QuizAttemptRow>(`
+      SELECT * FROM quiz_attempts
+      WHERE id = $1 AND is_completed = FALSE AND is_deleted = FALSE
+      FOR UPDATE
+    `, [attemptId])
+
+        if (attemptResult.rows.length === 0) {
+            throw new Error('Quiz attempt not found or already completed')
+        }
+
+        const attempt = attemptResult.rows[0]
+
+        // Create submission
+        const submissionResult = await client.query<SubmissionRow>(`
+      INSERT INTO quiz_submissions
+      (quiz_id, user_id, event_id, attempt_id, ip_address, user_agent, session_duration_seconds)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING *
+    `, [
+            attempt.quiz_id,
+            attempt.user_id,
+            options?.eventId || null,
+            attemptId,
+            options?.ipAddress || null,
+            options?.userAgent || null,
+            attempt.total_active_seconds
+        ])
+
+        const submissionId = submissionResult.rows[0].id
+
+        // Link all responses to the submission
+        await client.query(`
+      UPDATE quiz_responses
+      SET submission_id = $1
+      WHERE attempt_id = $2 AND submission_id IS NULL AND is_deleted = FALSE
+    `, [submissionId, attemptId])
+
+        // Mark attempt as completed
+        await client.query(`
+      UPDATE quiz_attempts
+      SET is_completed = TRUE,
+          updated_at = NOW()
+      WHERE id = $1
+    `, [attemptId])
+
+        return submissionId
+    })
+}
+
+/**
+ * Update quiz attempt activity timestamp
+ * Returns the new total active seconds
+ */
+export async function updateQuizAttemptActivity(attemptId: string): Promise<number> {
+    const result = await query<{ total_active_seconds: number }>(`
+    UPDATE quiz_attempts
+    SET last_activity_at = NOW(),
+        updated_at = NOW()
+    WHERE id = $1 AND is_completed = FALSE AND is_deleted = FALSE
+    RETURNING total_active_seconds
+  `, [attemptId])
+
+    if (result.rows.length === 0) {
+        throw new Error('Quiz attempt not found or already completed')
+    }
+
+    return result.rows[0].total_active_seconds
 }
 

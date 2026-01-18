@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { SpinnerIcon, ArrowLeftIcon, PlusIcon, TrashIcon, ChevronUpIcon, ChevronDownIcon } from '@/components/icons'
 import type { CreateQuizData, CreateQuestionData, CreateAnswerData } from '@/lib/types/quiz'
 import { defaultLocale } from '@/i18n/config'
+import { generateSlug } from '@/lib/utils'
 
 export default function CreateQuizPage() {
   const t = useTranslations('admin')
@@ -19,7 +20,6 @@ export default function CreateQuizPage() {
   const [events, setEvents] = useState<{ id: string; title: string; date: string }[]>([])
 
   const [formData, setFormData] = useState<CreateQuizData>({
-    slug: '',
     title: '',
     titleAr: '',
     description: '',
@@ -30,6 +30,8 @@ export default function CreateQuizPage() {
     allowMultipleSubmissions: false,
     questions: [],
   })
+
+  const [previewSlug, setPreviewSlug] = useState('')
 
   useEffect(() => {
     async function fetchEvents() {
@@ -46,6 +48,14 @@ export default function CreateQuizPage() {
     fetchEvents()
   }, [])
 
+  useEffect(() => {
+    if (formData.title) {
+      setPreviewSlug(generateSlug(formData.title))
+    } else {
+      setPreviewSlug('')
+    }
+  }, [formData.title])
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target
     setFormData(prev => ({
@@ -53,14 +63,6 @@ export default function CreateQuizPage() {
       [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked :
                type === 'number' ? (value ? parseInt(value) : null) : value,
     }))
-  }
-
-  const generateSlug = () => {
-    const slug = formData.title
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '')
-    setFormData(prev => ({ ...prev, slug }))
   }
 
   const addQuestion = () => {
@@ -230,25 +232,10 @@ export default function CreateQuizPage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              {t('quizSlug')} *
+              {t('quizSlug')}
             </label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                name="slug"
-                value={formData.slug}
-                onChange={handleChange}
-                required
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                placeholder="quiz-url-slug"
-              />
-              <button
-                type="button"
-                onClick={generateSlug}
-                className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                {t('generateFromTitle')}
-              </button>
+            <div className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-600 text-sm">
+              {previewSlug || '(Will be generated automatically from title)'}
             </div>
           </div>
 

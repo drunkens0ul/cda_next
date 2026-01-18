@@ -219,7 +219,8 @@
     "loginRequired": "Please login to continue",
     "quizNotFound": "Quiz not found",
     "quizInactive": "This quiz is not currently active",
-    "backToQuiz": "Back to Quiz"
+    "backToQuiz": "Back to Quiz",
+    "questionAlreadyAnswered": "This question has already been answered. Please continue to the next question."
   },
   "auth": {
     "organizationName": "Community Development Authority",
@@ -530,7 +531,11 @@
     "moveUp": "Move Up",
     "moveDown": "Move Down",
     "submissionsOverTime": "Submissions Over Time",
-    "noAnalyticsData": "No submission data available yet."
+    "noAnalyticsData": "No submission data available yet.",
+    "question": "Question",
+    "questions": "Questions",
+    "addQuestion": "Add Question",
+    "noQuestionsYet": "No questions added yet"
   },
   "NotFound": {
     "title": "Page Not Found",

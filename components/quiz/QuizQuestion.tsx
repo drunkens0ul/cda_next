@@ -156,11 +156,11 @@ export default function QuizQuestion({
                                         key={answer.id}
                                         onClick={() => handleAnswerSelect(answer.id)}
                                         className={`w-full text-left px-6 py-4 rounded-xl border-2 transition-all transform hover:scale-102 ${localSelectedAnswer === answer.id
-                                                ? 'border-yellow-400 bg-yellow-50 shadow-lg'
-                                                : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-md'
+                                                ? 'border-primary bg-primary shadow-sm'
+                                                : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
                                             }`}
                                     >
-                                        <span className={`font-medium ${localSelectedAnswer === answer.id ? 'text-gray-900' : 'text-gray-700'
+                                        <span className={`font-medium ${localSelectedAnswer === answer.id ? 'text-white' : 'text-gray-700'
                                             }`}>
                                             {answer.text[lang]}
                                         </span>

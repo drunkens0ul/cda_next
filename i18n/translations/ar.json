@@ -219,7 +219,8 @@
     "loginRequired": "يرجى تسجيل الدخول للمتابعة",
     "quizNotFound": "الاستبيان غير موجود",
     "quizInactive": "هذا الاستبيان غير نشط حالياً",
-    "backToQuiz": "العودة للاستبيان"
+    "backToQuiz": "العودة للاستبيان",
+    "questionAlreadyAnswered": "تمت الإجابة على هذا السؤال بالفعل. يرجى المتابعة إلى السؤال التالي."
   },
   "auth": {
     "organizationName": "هيئة تنمية المجتمع",
@@ -530,7 +531,11 @@
     "moveUp": "تحريك للأعلى",
     "moveDown": "تحريك للأسفل",
     "submissionsOverTime": "الردود عبر الزمن",
-    "noAnalyticsData": "لا توجد بيانات متاحة بعد."
+    "noAnalyticsData": "لا توجد بيانات متاحة بعد.",
+    "question": "السؤال",
+    "questions": "الأسئلة",
+    "addQuestion": "إضافة سؤال",
+    "noQuestionsYet": "لم تتم إضافة أي أسئلة بعد"
   },
   "NotFound": {
     "title": "الصفحة غير موجودة",
