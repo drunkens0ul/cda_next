@@ -7,43 +7,38 @@ Transformed the quiz system from "submit all at once" to "submit one by one" wit
 
 ### 1. Database Changes
 
-#### New Migration: `007_add_quiz_progressive_submission.sql`
+#### Migration: `007_add_quiz_progressive_submission.sql`
 
 **New Table: `quiz_attempts`**
 - Tracks active quiz sessions per user per quiz
 - Stores current question index, started/last activity timestamps
 - Tracks total active seconds (actual time spent)
-- Unique constraint prevents multiple active attempts per user per quiz
 
 **Modified Tables:**
 - `quiz_responses`: Added `attempt_id` column (links to attempt before submission)
 - `quiz_submissions`: Added `attempt_id` column (links to final submission)
 
-**New Trigger: `update_attempt_active_time`**
-- Automatically calculates active time based on activity updates
-- Increments `total_active_seconds` when `last_activity_at` is updated
+#### Migration: `008_fix_quiz_responses_unique_constraint.sql`
+- Adds partial unique index to prevent duplicate answers per question
+
+#### Migration: `009_fix_quiz_progressive_submission.sql`
+- **Makes `submission_id` nullable** for in-progress responses
+- **Fixes unique constraints** - proper partial unique index for attempts
+- **Removes problematic trigger** - activity time now tracked via heartbeats in app code
 
 #### How to Run Migration
 
 **Option 1: Using the provided script**
 ```bash
-cd /home/mat/CDA/cda_next
+cd /home/mat/Projects/cda_next
 ./database/run-progressive-migration.sh
 ```
 
 **Option 2: Manual execution**
 ```bash
 psql "$DATABASE_URL" -f database/migrations/007_add_quiz_progressive_submission.sql
-```
-
-**Option 3: Docker Compose (when using Docker)**
-```bash
-# Copy migration to init directory if not already
-cp database/migrations/007_add_quiz_progressive_submission.sql database/init/migrations/
-
-# Recreate database container
-docker-compose down -v
-docker-compose up -d db
+psql "$DATABASE_URL" -f database/migrations/008_fix_quiz_responses_unique_constraint.sql
+psql "$DATABASE_URL" -f database/migrations/009_fix_quiz_progressive_submission.sql
 ```
 
 ### 2. Backend Changes
@@ -75,7 +70,8 @@ docker-compose up -d db
 
 **POST `/api/quiz/update-activity`**
 - Updates `last_activity_at` timestamp
-- Called periodically (every 30 seconds) while user is active
+- **Adds 30 seconds to `total_active_seconds`** (heartbeat-based tracking)
+- Called periodically (every 30 seconds) while user is active AND tab is visible
 
 #### Modified API Routes
 
@@ -179,9 +175,30 @@ interface AttemptResponse {
 
 ### Activity Time Calculation
 
-The trigger automatically calculates active time:
-```sql
-total_active_seconds = previous_total + (new_activity_time - old_activity_time)
+**Heartbeat-Based Tracking (Application Code):**
+
+Activity time is tracked via periodic heartbeats from the frontend:
+
+1. Frontend sends a heartbeat every 30 seconds (only when tab is visible)
+2. Each heartbeat adds 30 seconds to `total_active_seconds`
+3. When user leaves (tab hidden, app minimized), heartbeats stop
+4. When user returns, heartbeats resume
+
+```typescript
+// lib/quiz.ts
+const HEARTBEAT_INTERVAL_SECONDS = 30
+
+export async function updateQuizAttemptActivity(attemptId: string): Promise<number> {
+    const result = await query(`
+    UPDATE quiz_attempts
+    SET last_activity_at = NOW(),
+        total_active_seconds = total_active_seconds + $1,
+        updated_at = NOW()
+    WHERE id = $2 AND is_completed = FALSE AND is_deleted = FALSE
+    RETURNING total_active_seconds
+  `, [HEARTBEAT_INTERVAL_SECONDS, attemptId])
+    return result.rows[0].total_active_seconds
+}
 ```
 
 This means:
@@ -312,6 +329,8 @@ FROM quiz_attempts;
 
 **Database:**
 - `database/migrations/007_add_quiz_progressive_submission.sql` (new)
+- `database/migrations/008_fix_quiz_responses_unique_constraint.sql` (new)
+- `database/migrations/009_fix_quiz_progressive_submission.sql` (new)
 - `database/run-progressive-migration.sh` (new)
 
 **Backend:**

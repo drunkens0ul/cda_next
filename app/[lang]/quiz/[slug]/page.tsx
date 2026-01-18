@@ -365,6 +365,7 @@ export default function QuizPage() {
                     description={quiz.description[lang]}
                     onStart={handleStartQuiz}
                     lang={lang}
+                    totalQuestions={quiz.questions.length}
                 />
             )}
 
@@ -387,6 +388,7 @@ export default function QuizPage() {
                         </div>
                     )}
                     <QuizQuestion
+                        key={quiz.questions[currentQuestionIndex].id}
                         question={quiz.questions[currentQuestionIndex]}
                         questionNumber={currentQuestionIndex + 1}
                         totalQuestions={quiz.questions.length}

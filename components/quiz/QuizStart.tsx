@@ -28,9 +28,10 @@ interface QuizStartProps {
     description: string
     onStart: () => void
     lang: 'en' | 'ar'
+    totalQuestions: number
 }
 
-export default function QuizStart({ title, description, onStart, lang }: QuizStartProps) {
+export default function QuizStart({ title, description, onStart, lang, totalQuestions }: QuizStartProps) {
     const t = useTranslations('quiz')
     const [confettiParticles] = useState<ConfettiCircle[]>(generateConfettiCircles)
 
@@ -87,7 +88,7 @@ export default function QuizStart({ title, description, onStart, lang }: QuizSta
 
                     {/* Progress Badge */}
                     <div className="bg-yellow-400 text-gray-900 px-4 py-2 rounded-full text-sm font-semibold shadow-lg">
-                        0 {t('of')} 5 {t('question')}
+                        0 {t('of')} {totalQuestions} {t('question')}
                     </div>
                 </div>
 

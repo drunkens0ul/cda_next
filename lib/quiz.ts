@@ -404,24 +404,24 @@ export async function getAllQuizzesForAdmin(): Promise<QuizListItem[]> {
  * Create a new quiz with questions and answers
  */
 async function generateUniqueSlug(baseSlug: string, client: PoolClient): Promise<string> {
-  let slug = baseSlug
-  let counter = 1
+    let slug = baseSlug
+    let counter = 1
 
-  while (true) {
-    const result = await client.query<{ exists: boolean }>(`
+    while (true) {
+        const result = await client.query<{ exists: boolean }>(`
       SELECT EXISTS(
         SELECT 1 FROM quizzes
         WHERE slug = $1
       ) as exists
     `, [slug])
 
-    if (!result.rows[0].exists) {
-      return slug
-    }
+        if (!result.rows[0].exists) {
+            return slug
+        }
 
-    slug = `${baseSlug}-${counter}`
-    counter++
-  }
+        slug = `${baseSlug}-${counter}`
+        counter++
+    }
 }
 
 export async function createQuiz(data: CreateQuizData): Promise<Quiz> {
@@ -448,16 +448,16 @@ export async function createQuiz(data: CreateQuizData): Promise<Quiz> {
               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
               RETURNING *
             `, [
-                        slug,
-                        data.title,
-                        data.titleAr,
-                        data.description,
-                        data.descriptionAr,
-                        data.eventId,
-                        data.isActive,
-                        data.requiresAuth,
-                        data.allowMultipleSubmissions
-                    ])
+                    slug,
+                    data.title,
+                    data.titleAr,
+                    data.description,
+                    data.descriptionAr,
+                    data.eventId,
+                    data.isActive,
+                    data.requiresAuth,
+                    data.allowMultipleSubmissions
+                ])
 
                 const quizId = quizResult.rows[0].id
 
@@ -470,13 +470,13 @@ export async function createQuiz(data: CreateQuizData): Promise<Quiz> {
                 VALUES ($1, $2, $3, $4, $5, $6)
                 RETURNING *
               `, [
-                            quizId,
-                            question.questionOrder,
-                            question.questionText,
-                            question.questionTextAr,
-                            question.questionType,
-                            question.isRequired
-                        ])
+                        quizId,
+                        question.questionOrder,
+                        question.questionText,
+                        question.questionTextAr,
+                        question.questionType,
+                        question.isRequired
+                    ])
 
                     const questionId = questionResult.rows[0].id
 
@@ -487,12 +487,12 @@ export async function createQuiz(data: CreateQuizData): Promise<Quiz> {
                   (question_id, answer_order, answer_text, answer_text_ar, answer_value)
                   VALUES ($1, $2, $3, $4, $5)
                 `, [
-                                questionId,
-                                answer.answerOrder,
-                                answer.answerText,
-                                answer.answerTextAr,
-                                answer.answerValue
-                            ])
+                            questionId,
+                            answer.answerOrder,
+                            answer.answerText,
+                            answer.answerTextAr,
+                            answer.answerValue
+                        ])
                     }
                 }
 
@@ -579,16 +579,16 @@ export async function updateQuiz(slug: string, data: UpdateQuizData): Promise<Qu
           allow_multiple_submissions = $8, updated_at = NOW()
       WHERE slug = $9
     `, [
-                data.title,
-                data.titleAr,
-                data.description,
-                data.descriptionAr,
-                data.eventId,
-                data.isActive,
-                data.requiresAuth,
-                data.allowMultipleSubmissions,
-                slug
-            ])
+            data.title,
+            data.titleAr,
+            data.description,
+            data.descriptionAr,
+            data.eventId,
+            data.isActive,
+            data.requiresAuth,
+            data.allowMultipleSubmissions,
+            slug
+        ])
 
         // Get existing question IDs
         const existingQuestions = await client.query<{ id: string; question_order: number }>(`
@@ -611,13 +611,13 @@ export async function updateQuiz(slug: string, data: UpdateQuizData): Promise<Qu
               question_type = $4, is_required = $5, is_deleted = FALSE, updated_at = NOW()
           WHERE id = $6
         `, [
-                        question.questionOrder,
-                        question.questionText,
-                        question.questionTextAr,
-                        question.questionType,
-                        question.isRequired,
-                        question.id
-                    ])
+                    question.questionOrder,
+                    question.questionText,
+                    question.questionTextAr,
+                    question.questionType,
+                    question.isRequired,
+                    question.id
+                ])
             } else {
                 // Create new question
                 const result = await client.query<QuestionRow>(`
@@ -627,13 +627,13 @@ export async function updateQuiz(slug: string, data: UpdateQuizData): Promise<Qu
           VALUES ($1, $2, $3, $4, $5, $6)
           RETURNING *
         `, [
-                        existingQuiz.id,
-                        question.questionOrder,
-                        question.questionText,
-                        question.questionTextAr,
-                        question.questionType,
-                        question.isRequired
-                    ])
+                    existingQuiz.id,
+                    question.questionOrder,
+                    question.questionText,
+                    question.questionTextAr,
+                    question.questionType,
+                    question.isRequired
+                ])
                 existingQuestionMap.set(question.questionOrder, result.rows[0].id)
             }
 
@@ -660,12 +660,12 @@ export async function updateQuiz(slug: string, data: UpdateQuizData): Promise<Qu
                 answer_value = $4, is_deleted = FALSE, updated_at = NOW()
             WHERE id = $5
           `, [
-                            answer.answerOrder,
-                            answer.answerText,
-                            answer.answerTextAr,
-                            answer.answerValue,
-                            answer.id
-                        ])
+                        answer.answerOrder,
+                        answer.answerText,
+                        answer.answerTextAr,
+                        answer.answerValue,
+                        answer.id
+                    ])
                 } else if (!answer.isDeleted) {
                     // Create new answer
                     await client.query(`
@@ -673,12 +673,12 @@ export async function updateQuiz(slug: string, data: UpdateQuizData): Promise<Qu
             (question_id, answer_order, answer_text, answer_text_ar, answer_value)
             VALUES ($1, $2, $3, $4, $5)
           `, [
-                            questionId,
-                            answer.answerOrder,
-                            answer.answerText,
-                            answer.answerTextAr,
-                            answer.answerValue
-                        ])
+                        questionId,
+                        answer.answerOrder,
+                        answer.answerText,
+                        answer.answerTextAr,
+                        answer.answerValue
+                    ])
                 }
             }
 
@@ -977,7 +977,7 @@ export async function submitQuizAnswer(
         const currentQuestionIndex = attempt.current_question_index
 
         // Check if question was already answered
-        const existingResponse = await client.query<{id: string}>(`
+        const existingResponse = await client.query<{ id: string }>(`
             SELECT id FROM quiz_responses
             WHERE attempt_id = $1 AND question_id = $2 AND is_deleted = FALSE
         `, [attemptId, questionId])
@@ -1005,20 +1005,16 @@ export async function submitQuizAnswer(
         const nextQuestionIndex = currentQuestionIndex + 1
         const isComplete = nextQuestionIndex >= totalQuestions
 
-        // Update attempt: increment question index and update activity
-        const newActivityAt = new Date()
-        const elapsedSeconds = attempt.last_activity_at
-            ? Math.floor((newActivityAt.getTime() - attempt.last_activity_at.getTime()) / 1000)
-            : 0
-
+        // Update attempt: increment question index and update last activity timestamp
+        // Note: total_active_seconds is tracked via heartbeat (update-activity endpoint)
+        // We don't add time here to avoid double-counting with heartbeats
         await client.query(`
       UPDATE quiz_attempts
       SET current_question_index = $1,
-          last_activity_at = $2,
-          total_active_seconds = total_active_seconds + $3,
+          last_activity_at = NOW(),
           updated_at = NOW()
-      WHERE id = $4
-    `, [nextQuestionIndex, newActivityAt, elapsedSeconds, attemptId])
+      WHERE id = $2
+    `, [nextQuestionIndex, attemptId])
 
         return {
             nextQuestionIndex,
@@ -1163,17 +1159,22 @@ export async function finalizeQuizSubmission(
 }
 
 /**
- * Update quiz attempt activity timestamp
+ * Update quiz attempt activity timestamp and add active time
+ * This is called via heartbeat from frontend (e.g., every 30 seconds)
+ * Each call adds HEARTBEAT_INTERVAL_SECONDS to total_active_seconds
  * Returns the new total active seconds
  */
+const HEARTBEAT_INTERVAL_SECONDS = 30
+
 export async function updateQuizAttemptActivity(attemptId: string): Promise<number> {
     const result = await query<{ total_active_seconds: number }>(`
     UPDATE quiz_attempts
     SET last_activity_at = NOW(),
+        total_active_seconds = total_active_seconds + $1,
         updated_at = NOW()
-    WHERE id = $1 AND is_completed = FALSE AND is_deleted = FALSE
+    WHERE id = $2 AND is_completed = FALSE AND is_deleted = FALSE
     RETURNING total_active_seconds
-  `, [attemptId])
+  `, [HEARTBEAT_INTERVAL_SECONDS, attemptId])
 
     if (result.rows.length === 0) {
         throw new Error('Quiz attempt not found or already completed')

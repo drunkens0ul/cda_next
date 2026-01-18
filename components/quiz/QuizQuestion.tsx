@@ -59,7 +59,8 @@ export default function QuizQuestion({
         setError(null)
     }
 
-    const progress = (questionNumber / totalQuestions) * 100
+    const completedCount = (questionNumber - 1) + (localSelectedAnswer ? 1 : 0)
+    const progress = (completedCount / totalQuestions) * 100
 
     return (
         <div className="min-h-screen flex flex-col bg-gray-50">
@@ -156,8 +157,8 @@ export default function QuizQuestion({
                                         key={answer.id}
                                         onClick={() => handleAnswerSelect(answer.id)}
                                         className={`w-full text-left px-6 py-4 rounded-xl border-2 transition-all transform hover:scale-102 ${localSelectedAnswer === answer.id
-                                                ? 'border-primary bg-primary shadow-sm'
-                                                : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+                                            ? 'border-primary bg-primary shadow-sm'
+                                            : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
                                             }`}
                                     >
                                         <span className={`font-medium ${localSelectedAnswer === answer.id ? 'text-white' : 'text-gray-700'
