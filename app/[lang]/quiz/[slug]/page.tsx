@@ -361,8 +361,8 @@ export default function QuizPage() {
         <div className="min-h-screen bg-gray-50">
             {currentStep === 'start' && (
                 <QuizStart
-                    title={quiz.title[lang]}
-                    description={quiz.description[lang]}
+                    title={quiz.title}
+                    description={quiz.description}
                     onStart={handleStartQuiz}
                     lang={lang}
                     totalQuestions={quiz.questions.length}

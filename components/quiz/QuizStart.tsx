@@ -24,8 +24,8 @@ const generateConfettiCircles = (): ConfettiCircle[] => {
 }
 
 interface QuizStartProps {
-    title: string
-    description: string
+    title: { en: string; ar: string }
+    description: { en: string; ar: string }
     onStart: () => void
     lang: 'en' | 'ar'
     totalQuestions: number
@@ -35,8 +35,11 @@ export default function QuizStart({ title, description, onStart, lang, totalQues
     const t = useTranslations('quiz')
     const [confettiParticles] = useState<ConfettiCircle[]>(generateConfettiCircles)
 
+    const mainLang = lang
+    const subLang = lang === 'en' ? 'ar' : 'en'
+
     return (
-        <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+        <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden bg-gray-50/50">
             {/* Confetti Background */}
             <div className="absolute inset-0 pointer-events-none">
                 <svg className="absolute w-full h-24 bottom-0 left-0 right-0" viewBox="0 0 1200 120" preserveAspectRatio="none">
@@ -68,7 +71,7 @@ export default function QuizStart({ title, description, onStart, lang, totalQues
             <div className="max-w-2xl w-full relative z-10">
                 {/* Header with Logo */}
                 <div className="flex justify-between items-center mb-8">
-                    <Link href={`/${lang}`} className="flex items-center gap-3">
+                    <Link href={`/${lang}`} className="flex items-center gap-3 transition-opacity hover:opacity-80">
                         <Image
                             src="/assets/logo.png"
                             alt="CDA Logo"
@@ -87,26 +90,40 @@ export default function QuizStart({ title, description, onStart, lang, totalQues
                     </Link>
 
                     {/* Progress Badge */}
-                    <div className="bg-yellow-400 text-gray-900 px-4 py-2 rounded-full text-sm font-semibold shadow-lg">
+                    <div className="bg-gradient-to-r from-yellow-400 to-orange-400 text-white px-5 py-2 rounded-full text-sm font-bold shadow-lg shadow-orange-200 transform hover:scale-105 transition-all">
                         0 {t('of')} {totalQuestions} {t('question')}
                     </div>
                 </div>
 
                 {/* Main Content Card */}
-                <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100 p-8 lg:p-12 flex flex-col items-center justify-center text-center">
-                    <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-                        {title}
-                    </h1>
-                    <p className="text-gray-600 text-lg mb-8 leading-relaxed max-w-2xl">
-                        {description}
-                    </p>
+                <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-gray-100 p-8 lg:p-12 flex flex-col items-center justify-center text-center relative group">
+                    <div className="absolute inset-0 bg-gradient-to-br from-white via-white to-gray-50 opacity-90" />
+                    <div className="relative z-10 w-full">
+                        <div className="mb-8 space-y-4">
+                            <h1 className="text-3xl lg:text-5xl font-extrabold text-gray-900 leading-tight tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-700">
+                                {title[mainLang]}
+                            </h1>
+                            <h2 className="text-xl lg:text-2xl font-bold text-gray-400" dir={subLang === 'ar' ? 'rtl' : 'ltr'}>
+                                {title[subLang]}
+                            </h2>
+                        </div>
 
-                    <button
-                        onClick={onStart}
-                        className="w-full max-w-md bg-primary hover:bg-primary-700 text-white font-semibold py-4 px-8 rounded-xl transition-all transform hover:scale-105 shadow-lg hover:shadow-xl"
-                    >
-                        {t('startQuiz')}
-                    </button>
+                        <div className="mb-10 space-y-3 px-4 sm:px-8">
+                            <p className="text-gray-600 text-lg leading-relaxed font-medium">
+                                {description[mainLang]}
+                            </p>
+                            <p className="text-gray-400 text-base leading-relaxed" dir={subLang === 'ar' ? 'rtl' : 'ltr'}>
+                                {description[subLang]}
+                            </p>
+                        </div>
+
+                        <button
+                            onClick={onStart}
+                            className="w-full max-w-md bg-gradient-to-r from-primary to-primary-700 hover:to-primary-800 text-white font-bold py-4 px-8 rounded-2xl transition-all transform hover:scale-105 shadow-xl hover:shadow-2xl shadow-primary/20 ring-4 ring-primary/5 active:scale-95"
+                        >
+                            <span className="text-lg">{t('startQuiz')}</span>
+                        </button>
+                    </div>
                 </div>
 
                 {/* Footer Confetti */}
@@ -115,7 +132,7 @@ export default function QuizStart({ title, description, onStart, lang, totalQues
                         {Array.from({ length: 8 }).map((_, i) => (
                             <div
                                 key={i}
-                                className="w-2 h-2 rounded-full animate-bounce"
+                                className="w-2.5 h-2.5 rounded-full animate-bounce"
                                 style={{
                                     backgroundColor: `hsl(${(i * 360) / 8}, 70%, 60%)`,
                                     animationDelay: `${i * 0.1}s`,
